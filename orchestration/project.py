@@ -129,7 +129,7 @@ class Project(object):
         return project
 
     def from_file(username, password, project_path):
-        srv_dicts = config.read()
+        srv_dicts = config.read(project_path)
 
         if project_path[-1] == '/':
             project_name = project_path.split('/')[-2]

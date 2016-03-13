@@ -1,9 +1,13 @@
 import yaml
 import os
+from orchestration.exception import ConfigurationError
 
 def read(file_path):
+
+	file = file_path + '/docker-compose.yml'
+
     if not os.path.isfile(file_path):
-        return '-'
+        raise ConfigurationError("no docker-compose.yml file found")
 
     f = open(file_path)
     config = yaml.safe_load(f)
