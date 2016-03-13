@@ -1,0 +1,7 @@
+logspout:
+  image: gliderlabs/logspout
+  command: 'syslog:// {{syslog}}:514'
+syslog:
+  image: syslog
+  command: '/etc/init.d/rsyslogd start'
+  container_name: syslog

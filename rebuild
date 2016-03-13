@@ -1,0 +1,5 @@
+
+sudo python setup.py clean
+sudo python setup.py install
+
+

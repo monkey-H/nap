@@ -1,4 +1,4 @@
-from happy.config import config
+from orchestration.config import config
 import os
 import sys
 
