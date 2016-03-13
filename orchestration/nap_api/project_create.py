@@ -5,15 +5,15 @@ import logging
 import shutil
 
 from orchestration import config
-from orchestration import project
+from orchestration.project import Project
 
 from git import Repo
 from git.exc import GitCommandError
 from orchestration.database.database_update import roll_back
 from cStringIO import StringIO
 import traceback
+
 # from orchestration.config.errors import ComposeFileNotFound
-# from orchestration.config.errors import ConfigurationError
 # from orchestration.cli.docopt_command import NoSuchCommand
 # from orchestration.cli.errors import UserError
 # from orchestration.service import NeedsBuildError
@@ -22,6 +22,8 @@ import traceback
 # from orchestration.project import NoSuchService
 # from orchestration.progress_stream import StreamOutputError
 # from orchestration.const import HTTP_TIMEOUT
+
+from orchestration.exception import ConfigurationError
 from docker.errors import APIError
 from requests.exceptions import ReadTimeout
 from orchestration import legacy
@@ -130,14 +132,18 @@ def replace_string(file_path, key, value):
 def create_project_exceptions(username, password, project_path, project_name):
     try:
         print project_path
-        project = project.from_file(username, password, project_path)
+        project = Project.from_file(username, password, project_path)
         project.start()
         #new_main(project_path, username, password)
-    except KeyboardInterrupt:
-        logs = roll_back(username, password, project_name)
-        # shutil.rmtree(project_path)
-        return False, logs + 'Keyboard Aborting'
-    except (UserError, NoSuchService, ConfigurationError, legacy.LegacyError) as e:
+    # except KeyboardInterrupt:
+    #     logs = roll_back(username, password, project_name)
+    #     # shutil.rmtree(project_path)
+    #     return False, logs + 'Keyboard Aborting'
+    # except (UserError, NoSuchService, ConfigurationError, legacy.LegacyError) as e:
+    #     logs = roll_back(username, password, project_name)
+    #     # shutil.rmtree(project_path)
+    #     return False, logs + e.msg
+    except (ConfigurationError) as e:
         logs = roll_back(username, password, project_name)
         # shutil.rmtree(project_path)
         return False, logs + e.msg
@@ -147,21 +153,21 @@ def create_project_exceptions(username, password, project_path, project_name):
         log.error(e.explanation)
         return False, logs + e.explanation
         # sys.exit(1)
-    except BuildError as e:
-        logs = roll_back(username, password, project_name)
-        log.error("Service '%s' failed to build: %s" % (e.service.name, e.reason))
-        # shutil.rmtree(project_path)
-        return False, logs + "Service '%s' failed to build: %s" % (e.service.name, e.reason)
-    except StreamOutputError as e:
-        logs = roll_back(username, password, project_name)
-        log.error(e)
-        # shutil.rmtree(project_path)
-        return False, e
-    except NeedsBuildError as e:
-        logs = roll_back(username, password, project_name)
-        log.error("Service '%s' needs to be built, but --no-build was passed." % e.service.name)
-        # shutil.rmtree(project_path)
-        return False, (logs + "Service '%s' needs to be built, but --no-build was passed." % e.service.name)
+    # except BuildError as e:
+    #     logs = roll_back(username, password, project_name)
+    #     log.error("Service '%s' failed to build: %s" % (e.service.name, e.reason))
+    #     # shutil.rmtree(project_path)
+        # return False, logs + "Service '%s' failed to build: %s" % (e.service.name, e.reason)
+    # except StreamOutputError as e:
+    #     logs = roll_back(username, password, project_name)
+    #     log.error(e)
+    #     # shutil.rmtree(project_path)
+    #     return False, e
+    # except NeedsBuildError as e:
+    #     logs = roll_back(username, password, project_name)
+    #     log.error("Service '%s' needs to be built, but --no-build was passed." % e.service.name)
+    #     # shutil.rmtree(project_path)
+    #     return False, (logs + "Service '%s' needs to be built, but --no-build was passed." % e.service.name)
     except ReadTimeout as e:
         logs = roll_back(username, password, project_name)
         # shutil.rmtree(project_path)
