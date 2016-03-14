@@ -48,29 +48,29 @@ class Container(object):
 
 
 	def start(self):
-    	self.client.start(self.id)
+		self.client.start(self.id)
 
-    	detail = cli.inspect_container(container = self.id)
+		detail = self.client.inspect_container(container=self.id)
 
-    	self.status = detail['State']['Status']
-    	self.create_time = detail['Created']
-    	self.ip = detail['NetworkSettings']['IPAddress']
-    	self.ports = detail['NetworkSettings']['Ports']
+		self.status = detail['State']['Status']
+		self.create_time = detail['Created']
+		self.ip = detail['NetworkSettings']['IPAddress']
+		self.ports = detail['NetworkSettings']['Ports']
 
-    def stop(self):
-    	self.client.stop(container=self.name)
+	def stop(self):
+		self.client.stop(container=self.name)
 
-    def pause(self):
-    	self.client.pause(container=self.name)
+	def pause(self):
+		self.client.pause(container=self.name)
 
-    def unpause(self):
-    	self.client.unpause(container=self.name)
+	def unpause(self):
+		self.client.unpause(container=self.name)
 
-    def kill(self):
-    	self.client.kill(container=self.name)
+	def kill(self):
+		self.client.kill(container=self.name)
 
-    def remove(self):
-    	self.client.remove_container(container=self.name)
+	def remove(self):
+		self.client.remove_container(container=self.name)
 
-    def restart(self):
-    	self.client.restart(container=self.name)
+	def restart(self):
+		self.client.restart(container=self.name)

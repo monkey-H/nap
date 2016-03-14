@@ -143,6 +143,9 @@ def create_project_exceptions(username, password, project_path, project_name):
     #     logs = roll_back(username, password, project_name)
     #     # shutil.rmtree(project_path)
     #     return False, logs + e.msg
+    except (DependencyError) as e:
+        logs = roll_back(username, password, project_name)
+        return False, log + e.msg
     except (ConfigurationError) as e:
         logs = roll_back(username, password, project_name)
         # shutil.rmtree(project_path)

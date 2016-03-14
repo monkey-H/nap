@@ -1,0 +1,13 @@
+web:
+  image: docker.iwanna.xyz:5000/hmonkey/webapp:v2
+  command: '/usr/bin/sleep 30'
+  ports:
+    - 5000
+    - 20
+  links:
+    - db
+db:
+  image: busybox
+  command: '/usr/bin/sleep 30'
+  links:
+    - web

@@ -5,10 +5,10 @@ from docker import Client
 
 def container_exists(cli, container_name):
 	containers = cli.containers(all=True)
-    for k in containers:
-        if '/' + container_name in k['Names']:
-            return True
-    return False
+	for k in containers:
+		if '/' + container_name in k['Names']:
+			return True
+	return False
 
 def container_id(username, password, project_name, service_name):
 	full_name = username + config.split_mark + project_name + config.split_mark + service_name
@@ -31,4 +31,3 @@ def status_id(username, password, project_name, service_name):
 		return True, config.cadvisor_path + '/' + id
 	else:
 		return False, id
-

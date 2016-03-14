@@ -1,7 +1,6 @@
 from docker import Client
 import MySQLdb
 from orchestration import config
-
 # database_url = '114.212.189.147'
 # c_version = '1.21'
 # split_mark = '-'

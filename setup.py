@@ -30,10 +30,10 @@ install_requires = [
 ]
 
 setup(
-    name = 'nap-py',
-    version = find_version('api', '__init__.py'),
-    description = 'nap-py for Docker',
-    url = 'github.com/icsnju/nap-py',
+    name = 'just4happy',
+    version = find_version('orchestration', '__init__.py'),
+    description = 'new version of nap-core',
+    url = 'github.com/icsnju/nap-core',
     author = 'nap-Ying & nap-Yuan',
     packages = find_packages(),
     include_package_data = True,
