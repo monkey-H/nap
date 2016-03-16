@@ -3,18 +3,18 @@
 2016-03-11
 
 ## 组件：
-+ docker：容器引擎，运行在**每台**主机上。
-+ consul：高可用的键值存储，用来支持docker（v1.9+）的overlay网络及其它系统信息，运行在**每台**主机上。由于v1.10之前的 `docker daemon` 在每台主机上只有单个运行进程，所以 `consul` 作为主机进程而不是容器来执行。
-+ moosefs：分布式存储组件，使用 `mfs_chunkserver` 容器，运行在**每台**主机上，用来统一管理集群中各个主机的存储空间。
-+ database：数据库组件，使用`mysql`数据库容器，用来存储用户基本信息，应用列表等信息，运行在**主节点**上。
-+ security_certificate：安全认证组件，通过 `ldap` ，实现用户的认证管理，运行在**主节点**上。
-+ orchestration：容器编排和部署控制组件，通过改写 `docker compose` 源码，实现多容器应用的跨主机部署，运行在**开发机**上。
-+ health_check：健康检查组件，循环遍历宿主机的容器状态信息，并且存储在分布式存储服务 `consul` 中，为之后的**高可用**等预留接口，作为容器运行在**每台**主机上。
-+ log：日志收集组件，用来收集用户部署日志和应用容器打印日志，进而做进一步的分析，运行在**每台**主机上。
++ docker：容器引擎，运行在 **每台** 主机上。
++ consul：高可用的键值存储，用来支持 docker（v1.9+） 的 overlay 网络及其它系统信息，运行在 **每台** 主机上。由于v1.10之前的 `docker daemon` 在每台主机上只有单个运行进程，所以 `consul` 作为主机进程而不是容器来执行。
++ moosefs：分布式存储组件，使用 `mfs_chunkserver` 容器，运行在 **每台** 主机上，用来统一管理集群中各个主机的存储空间。
++ database：数据库组件，使用 `mysql` 数据库容器，用来存储用户基本信息，应用列表等信息，运行在 **主节点** 上。
++ security_certificate：安全认证组件，通过 `ldap` ，实现用户的认证管理，运行在 **主节点** 上。
++ orchestration：容器编排和部署控制组件，通过改写 `docker compose` 源码，实现多容器应用的跨主机部署，运行在 **开发机** 上。
++ health_check：健康检查组件，循环遍历宿主机的容器状态信息，并且存储在分布式存储服务 `consul` 中，为之后的 **高可用** 等预留接口，作为容器运行在 **每台** 主机上。
++ log：日志收集组件，用来收集用户部署日志和应用容器打印日志，进而做进一步的分析，运行在 **每台** 主机上。
 
 
 ## 搭建开发集群
-集群主机操作系统均为 ubuntu 14.04，要求内核版本号≥3.16，否则需升级内核：
+集群主机操作系统均为 ubuntu 14.04，要求内核版本号 ≥3.16，否则需升级内核：
 ```
 uname -a
 
@@ -22,17 +22,17 @@ sudo apt update
 sudo apt upgrade
 ```
 集群中共有三台主机，此外还有一台开发机。集群的三台主机之间可以通过ssh免密码互相登录，开发机也可以ssh登陆到各集群主机。
-集群三台主机的ip和hostname分别为（写入`/etc/hosts`）：
+集群中三台主机的ip和hostname分别为（写入`/etc/hosts`）：
 ```
 192.168.0.218   nap0  mfsmaster
 192.168.0.219   nap1
 192.168.0.220   nap2
 ```
-使用的用户名均为 `nap` 。其中nap0作为主节点。开发主机未列出。
+使用的用户名均为 `nap` 。其中 nap0 作为主节点。开发主机 **未** 列出。
 
 
 ### 安装软件和镜像
-在每台主机（nap0~nap2）上分别：
+在每台主机（nap0~nap2）上分别执行以下步骤：
 
 #### 安装docker
 ```
@@ -116,14 +116,16 @@ mfsmount --version
 docker pull mysql
 
 # 按照`nap-core/moosefs/`下各目录的`Dockerfile`，依次build moosefs master, chunkserver 和 metalogger 镜像
-cd ~/nap-core/moosefs/moosefs_master
+cd ~/nap-core/moosefs/mfs_master
 docker build -t mfs_master:latest .
 
-cd ~/nap-core/moosefs/moosefs_chunkserver
+cd ~/nap-core/moosefs/mfs_chunkserver
 docker build -t mfs_chunkserver:latest .
 
-cd ~/nap-core/moosefs/moosefs_metalogger
+cd ~/nap-core/moosefs/mfs_metalogger
 docker build -t mfs_metalogger:latest .
+
+Todo: 若使用了内部的docker registry，可将上面构建的镜像push到registry，然后从其它主机pull下来。
 ```
 
 #### 安装python-pip

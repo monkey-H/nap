@@ -7,11 +7,15 @@ class Service(object):
 	now only one
 	"""
 
-	def __init__(self, name, client, project, network=None, volume=None, **options):
+	def __init__(self, name, client, project, network=None, volume=None, options=None):
+		print options
 		self.name = name
 		self.client = client
 		self.project = project
-		self.cont = Container(client=client, service=name, network=network, volume=volume, **options)
+		self.cont = Container(client=client, service=name, network=network, volume=volume, options=options)
+
+	def create(self):
+		self.cont.create()
 
 	def start(self):
 		self.cont.start()

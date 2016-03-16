@@ -5,7 +5,7 @@ from orchestration.volume import Volume
 from orchestration.network import Network
 
 from orchestration.exception import NoImage
-
+from orchestration import config
 
 class Container(object):
 	"""
@@ -15,8 +15,8 @@ class Container(object):
 	as cpu, memory and so on
 	"""
 
-	def __init__(self, client, service, volume=None, network=None, **options):
-		self.client = client
+	def __init__(self, client, service, volume=None, network=None, options=None):
+		self.client = Client(base_url=client, version=config.c_version)
 		self.service = service
 		self.volume = volume
 		self.network = network
@@ -26,24 +26,27 @@ class Container(object):
 	def create(self):
 		params = {}
 
+		print self.options
+
 		if not 'image' in self.options:
 			raise NoImage(self.service)
 
-		if not 'command' in self.options:
-			raise NoCommand(self.service)
+		# if not 'command' in self.options:
+			# raise NoCommand(self.service)
 
 		params['image'] = self.options['image']
-		params['command'] = self.command
+		if 'command' in self.options:
+			params['command'] = self.options['command']
+			self.command = self.options['command']
 		params['name'] = self.options['container_name']
 
-		if not network == None:
+		if not self.network == None:
 			params['host_config'] = self.client.create_host_config(network_mode=network.name)
 
-		temp_cont = cli.create_container(**params)
+		temp_cont = self.client.create_container(**params)
 		self.id = temp_cont.get('Id')
 
 		self.image = self.options['image']
-		self.command = self.options['command']
 		self.name = self.options['container_name']
 
 

@@ -86,26 +86,12 @@ class Project(object):
 
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
-            # if len(l):
-            #     cls.links.append(l);
 
-            #调度算法
+            # orchestration algorithm
             index = random.randint(0,1)
             cc = client_list[index]
-            #
-            # service_dict['volumes_from'] = project.volume
-            # print project.volume
 
-            # log.info(service_dict)
-
-            # volumes_from = project.nap_get_volumes_from(service_dict, cc)
-            # net = Net(a.get_net())
-            # net = project.nap_net(service_dict, username, password)
-            # net = project.net
-
-            # database_update.create_service(username, password, service_dict['container_name'], index, name)
-
-            log.info("===============")
+            print service_dict
 
             service_dict['name'] = username + "-" + name + "-" + service_dict['name']
             service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
@@ -126,13 +112,13 @@ class Project(object):
 
             project.services.append(
                 Service(
+                    name=service_dict['name'],
                     client=cc,
                     project=name,
-                    name=service_dict['name'],
-                    # network=net,
-                    # volume=volumes_from,
-                    # **service_dict))
+                    network=None,
+                    volume=None,
                     options=service_dict))
+                    # options=**service_dict))
         return project
 
     @classmethod
@@ -145,6 +131,10 @@ class Project(object):
             project_name = project_path.split('/')[-1]
 
         return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts, client_list=config.client_list)
+
+    def create(self):
+        for service in self.services:
+            service.create();
 
     def start(self):
         for service in self.services:
