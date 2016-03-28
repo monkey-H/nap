@@ -1,4 +1,4 @@
-import config
+#import config
 import database
 from docker import Client
 

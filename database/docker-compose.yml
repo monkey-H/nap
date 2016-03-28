@@ -5,3 +5,4 @@ mysql:
   container_name: mysql
   environment:
     - MYSQL_ROOT_PASSWD = admin
+# todo 安全：移除明文密码

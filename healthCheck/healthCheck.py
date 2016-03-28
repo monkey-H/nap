@@ -7,11 +7,12 @@ from docker import Client
 
 TIME_GAP = 5
 
-def update_status():
+def updateStatus():
     c = consul.Consul(host=sys.argv[1])
     cli = Client(base_url=sys.argv[1]+':2376', version='1.21')
     while 1:
         containers = cli.containers(all=True)
+
         for container in containers:
             full_name = str(container['Names'][0]).split('/')[1]
             if not len(str(full_name).split('-')) == 3:
@@ -26,4 +27,5 @@ def update_status():
             c.kv.put('nap_services/%s/%s/%s' % (user_name, project_name, service_name), str(value))
         time.sleep(TIME_GAP)
 
-update_status()
+if __name__ == "__main__":
+    updateStatus()

@@ -1,17 +1,12 @@
 #!/usr/bin/python
 
-from docker import Client
-import consul
-import time
-
-TIME_GAP = 10
-
-#!/usr/bin/python
-
 import time
 import sys
 import consul
 from docker import Client
+
+TIME_INTERVAL_IN_SECOND = 10
+
 
 def update_status():
     c = consul.Consul(host=sys.argv[1])
@@ -31,7 +26,7 @@ def update_status():
             value['time'] = time.time()
             c.kv.put('nap_services/%s/%s/%s' % (user_name, project_name, service_name), str(value))
             print  c.kv.get('nap_services/%s/%s/%s' % (user_name, project_name, service_name))
-        time.sleep(TIME_GAP)
+        time.sleep(TIME_INTERVAL_IN_SECOND)
 
 def get_status(user_name, project_name, service_name):
     c = consul.Consul(host='114.212.189.147')
@@ -41,7 +36,7 @@ def get_status(user_name, project_name, service_name):
     current_time = time.time()
     update_gap = current_time - update_time
     print update_gap
-    if (update < TIME_GAP):
+    if (update < TIME_INTERVAL_IN_SECOND):
         return vv['status']
     else:
         return 'not update for long time'

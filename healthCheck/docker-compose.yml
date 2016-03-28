@@ -1,0 +1,4 @@
+healthCheck:
+  image: health-check
+  network: host
+  host: all

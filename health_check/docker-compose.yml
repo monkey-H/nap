@@ -1,5 +1,0 @@
-heart_beat:
-  image: heart_beat
-  command: 'host_ip'
-  container_name: 'heart_beat'
-  host: all
