@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from api.network import Network
-from api.volume import Volume
-from api.image import Image
-from api.client import Client
+from network import Network
+from image import Image
 
 from docker.errors import NotFound
 from docker.errors import APIError
-from api.exception import NoImage
-from api.exception import StatusError
+from exception import NoImage
+from exception import StatusError
 
-#todo 需要指定hostURL才能获取容器对象，需要有容器id/name与hostURL的对应数据，考虑应在上层实现
-#todo 考虑hostURL用client对象代替，如image.py那样？
 
 class Container(object):
     """
@@ -66,6 +62,7 @@ class Container(object):
         return None
 
     def exists(self, name):
+        cli = self.client
         containers = cli.containers(all=True)
         for item in containers:
             if '/' + name in item['Names']:
@@ -136,6 +133,10 @@ class Container(object):
         if 'privileged' in self.options:
             privileged = self.options['privileged']
 
+
+# todo -v 挂载volume
+# todo 注意：vol只能在创建容器的时候制定，不像network那样既可以创建时指定，也可以启动后attach
+
         volumes_from = None
         if 'volumes_from' in self.options:
             volumes_from = self.options['volumes_from']
@@ -150,7 +151,7 @@ class Container(object):
         self.id = container.get('Id')
 
     def start(self):
-        #todo 是否先检查容器是否已经create了？
+        # todo 是否先检查容器是否已经create了？
         try:
             self.client.start(container=self.id)
         except NotFound as e:
@@ -223,10 +224,12 @@ class Container(object):
     def restart(self):
         self.client.restart(container=self.id)
 
-    def connect_container_to_network(self, net_name):
+    def attachToNetwork(self, net_name):
         detail = self.client.inspect_network(net_name)
-        net_id = detail['Id']
+        self.attachToNetworkByID(detail['Id'])
+
+    def attachToNetworkByID(self, netID):
         try:
-            self.client.connect_container_to_network(container=self.id, net_id=net_id)
+            self.client.connect_container_to_network(self.id, netID)
         except APIError as e:
             raise StatusError(e.explanation)

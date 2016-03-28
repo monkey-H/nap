@@ -1,4 +1,3 @@
-
 from orchestration.service import Service
 from orchestration.config import config as file_treat
 from orchestration import config
@@ -7,11 +6,27 @@ from orchestration.exception import DependencyError
 
 import logging
 import random
+from containerAPI.client import Client
 
 log = logging.getLogger(__name__)
 
+def parse_volume_from_spec(volume_from_config):
+    parts = volume_from_config.split(':')
+    if len(parts) > 2:
+        raise ConfigError("Volume %s has incorrect format, should be "
+                          "external:internal[:mode]" % volume_from_config)
+
+    if len(parts) == 1:
+        source = parts[0]
+        mode = 'rw'
+    else:
+        source, mode = parts
+
+    return VolumeFromSpec(source, mode)
+
+
 def sort_service_dicts(services):
-# Topological sort (Cormen/Tarjan algorithm).
+    # Topological sort (Cormen/Tarjan algorithm).
     unmarked = services[:]
     temporary_marked = set()
     sorted_services = []
@@ -23,14 +38,14 @@ def sort_service_dicts(services):
         return [
             parse_volume_from_spec(volume_from).source
             for volume_from in volumes_from
-        ]
+            ]
 
     def get_service_dependents(service_dict, services):
         name = service_dict['name']
         return [
             service for service in services
             if (name in get_service_names(service.get('links', [])))
-        ]
+            ]
 
     def visit(n):
         if n['name'] in temporary_marked:
@@ -53,6 +68,7 @@ def sort_service_dicts(services):
 
     return sorted_services
 
+
 class Project(object):
     """
     Represents a project
@@ -73,23 +89,23 @@ class Project(object):
                 srv_dict['container_name'] = srv_dict['name']
             srv_dict['hostname'] = username + '-' + name + '-' + srv_dict['container_name']
 
-    	for srv_dict in service_dicts:
+        for srv_dict in service_dicts:
             if 'command' in srv_dict:
                 command = srv_dict['command']
                 if "{{" in command:
-    	            for s_dict in service_dicts:
+                    for s_dict in service_dicts:
                         before = s_dict['container_name']
                         after = username + "-" + name + "-" + before
                         before = "{{" + before + "}}"
                         command = command.replace(before, after)
-    	        srv_dict['command'] = command
+                srv_dict['command'] = command
 
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
 
             # orchestration algorithm
-            index = random.randint(0,1)
-            cc = client_list[index]
+            index = random.randint(0, 1)
+            cc = Client(client_list[index], config.c_version)
 
             print service_dict
 
@@ -118,7 +134,7 @@ class Project(object):
                     network=None,
                     volume=None,
                     options=service_dict))
-                    # options=**service_dict))
+            # options=**service_dict))
         return project
 
     @classmethod
@@ -130,7 +146,8 @@ class Project(object):
         else:
             project_name = project_path.split('/')[-1]
 
-        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts, client_list=config.client_list)
+        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts,
+                             client_list=config.client_list)
 
     def create(self):
         for service in self.services:

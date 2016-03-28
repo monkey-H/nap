@@ -9,8 +9,8 @@ class Client(object):
         self.url = hostURL
         self.version = version
 
-    def get_url():
+    def get_url(self):
         return self.url
 
-    def get_version():
+    def get_version(self):
         return self.version
