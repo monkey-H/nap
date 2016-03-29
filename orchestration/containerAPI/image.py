@@ -1,18 +1,17 @@
 import time
 from docker import Client
-from docker.errors import NotFound
 
-import sys
 
 def format_size(size):
     if size < 1000:
         return size
     elif size < 1000000:
-        return str('%.2f' % (size/1000)) + 'k'
+        return str('%.2f' % (size / 1000)) + 'k'
     elif size < 1000000000:
-        return str('%.2f' % (size/1000000)) + 'm'
+        return str('%.2f' % (size / 1000000)) + 'm'
     elif size < 1000000000000:
-        return str('%.2f' % (size/1000000000)) + 'g'
+        return str('%.2f' % (size / 1000000000)) + 'g'
+
 
 class Image(object):
     """
@@ -32,9 +31,7 @@ class Image(object):
     def get_info(self, name):
         dic = self.cli.inspect_image(name)
 
-        info = {}
-        info['tag'] = dic['RepoTags']
-        info['size'] = format_size(float(dic['VirtualSize']))
+        info = {'tag': dic['RepoTags'], 'size': format_size(float(dic['VirtualSize']))}
 
         time_num = time.mktime(time.strptime(dic['Created'].split('.')[0], '%Y-%m-%dT%H:%M:%S'))
         create_time = time.localtime(time_num)

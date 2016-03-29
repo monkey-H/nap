@@ -1,6 +1,7 @@
 from docker import Client
 from docker.errors import NotFound
 
+
 class Volume(object):
     """
     Represents a volume in nap

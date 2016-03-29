@@ -52,11 +52,11 @@ def sort_service_dicts(services):
             for volume_from in volumes_from
             ]
 
-    def get_service_dependents(service_dict, services):
+    def get_service_dependents(service_dict, srv):
         name = service_dict['name']
         return [
-            service for service in services
-            if (name in get_service_names(service.get('links', [])) orser
+            service for service in srv
+            if (name in get_service_names(service.get('links', [])) or
                 name in get_service_names_from_volumes_from(service.get('volumes_from', [])) or
                 name == get_service_name_from_net(service.get('net')))
             ]
@@ -164,15 +164,15 @@ class Project(object):
 
     def create(self):
         for service in self.services:
-            service.create();
+            service.create()
 
     def start(self):
         for service in self.services:
-            service.start();
+            service.start()
 
     def stop(self):
         for service in self.services:
-            service.stop();
+            service.stop()
 
     def pause(self):
         for service in self.services:

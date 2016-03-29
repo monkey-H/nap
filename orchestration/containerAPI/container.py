@@ -72,7 +72,7 @@ class Container(object):
     def create(self):
         params = {}
 
-        if not 'image' in self.options:
+        if 'image' not in self.options:
             raise NoImage('Container does not contain image')
 
         # params['image'] = Image(self.client, self.options['image'])
@@ -122,20 +122,19 @@ class Container(object):
         if 'mac_address' in self.options:
             params['mac_address'] = self.options['mac_address']
 
-        if not self.network == None:
+        if self.network:
             network_mode = self.network.name
 
         binds = None
-        if not self.volume.vol == None:
+        if self.volume.vol:
             binds = self.volume.vol
 
         privileged = False
         if 'privileged' in self.options:
             privileged = self.options['privileged']
 
-
-# todo -v 挂载volume
-# todo 注意：vol只能在创建容器的时候制定，不像network那样既可以创建时指定，也可以启动后attach
+        # todo -v 挂载volume
+        # todo 注意：vol只能在创建容器的时候制定，不像network那样既可以创建时指定，也可以启动后attach
 
         volumes_from = None
         if 'volumes_from' in self.options:
@@ -158,7 +157,6 @@ class Container(object):
             raise StatusError(e.explanation)
 
         detail = self.client.inspect_container(container=self.id)
-        # detail = self.client.inspect_container(container='6c1af3937f77901c9f9e7714de94c4084d87e5e8b6912866e485fd590588f35a')
 
         self.name = detail['Name']
         self.status = detail['State']['Status']
@@ -166,45 +164,11 @@ class Container(object):
         command = ""
         for item in detail['Config']['Cmd']:
             command = command + item + " "
-        self.command = command
+        self.cmd = command
 
         self.create_time = detail['Created']
         self.ip = detail['NetworkSettings']['IPAddress']
         self.ports = detail['NetworkSettings']['Ports']
-
-    # @classmethod
-    # def create_container(cls, url, image, command, name=None, version='1.21', volume=None, network=None):
-    #     cli = Client(base_url=url, version=version)
-    #
-    #     params = {
-    #         'image': image,
-    #         'command': command,
-    #              }
-    #
-    #     if not name == None:
-    #         params['name'] = name
-    #
-    #     if not network == None:
-    #         params['host_config'] = cli.create_host_config(network_mode=network.name)
-    #
-    #     # print params
-    #
-    #     container = cli.create_container(**params)
-    #     cli.start(container=container.get('Id'))
-    #
-    #     detail = cli.inspect_container(container=container)
-    #
-    #     dic = {}
-    #     dic['id'] = detail['Id']
-    #     dic['name'] = detail['Name']
-    #     dic['status'] = detail['State']['Status']
-    #     dic['image'] = image
-    #     dic['cmd'] = command
-    #     dic['create_time'] = detail['Created']
-    #     dic['ip'] = detail['NetworkSettings']['IPAddress']
-    #     dic['ports'] = detail['NetworkSettings']['Ports']
-    #
-    #     return cls(cli, volume, network, dic)
 
     def stop(self):
         self.client.stop(container=self.id)

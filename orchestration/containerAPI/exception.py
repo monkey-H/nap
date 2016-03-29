@@ -8,6 +8,7 @@ class NoImage(Exception):
     def __str__(self):
         return self.msg
 
+
 class StatusError(Exception):
     """
     Exchange docker errors into nap errors

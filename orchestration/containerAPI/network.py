@@ -1,5 +1,3 @@
-from docker import Client
-
 class Network(object):
     """
     Represents a docker network
@@ -18,10 +16,7 @@ class Network(object):
         ans = []
         networks = client.networks()
         for network in networks:
-            item = {}
-            item["name"] = network["Name"]
-            item["id"] = network["Id"]
-            item["driver"] = network["Driver"]
+            item = {"name": network["Name"], "id": network["Id"], "driver": network["Driver"]}
             ans.append(item)
 
         return ans
