@@ -1,6 +1,7 @@
 from orchestration.service import Service
 from orchestration.config import config as file_treat
 from orchestration import config
+from orchestration.exception import ConfigError
 
 from orchestration.exception import DependencyError
 
@@ -9,6 +10,7 @@ import random
 from containerAPI.client import Client
 
 log = logging.getLogger(__name__)
+
 
 def parse_volume_from_spec(volume_from_config):
     parts = volume_from_config.split(':')
@@ -22,7 +24,7 @@ def parse_volume_from_spec(volume_from_config):
     else:
         source, mode = parts
 
-    return VolumeFromSpec(source, mode)
+    return source
 
 
 def sort_service_dicts(services):
@@ -31,12 +33,22 @@ def sort_service_dicts(services):
     temporary_marked = set()
     sorted_services = []
 
+    def get_service_name_from_net(net_config):
+        if not net_config:
+            return
+
+        if not net_config.startswith('container:'):
+            return
+
+        _, net_name = net_config.split(':', 1)
+        return net_name
+
     def get_service_names(links):
         return [link.split(':')[0] for link in links]
 
     def get_service_names_from_volumes_from(volumes_from):
         return [
-            parse_volume_from_spec(volume_from).source
+            parse_volume_from_spec(volume_from)
             for volume_from in volumes_from
             ]
 
@@ -44,7 +56,9 @@ def sort_service_dicts(services):
         name = service_dict['name']
         return [
             service for service in services
-            if (name in get_service_names(service.get('links', [])))
+            if (name in get_service_names(service.get('links', [])) orser
+                name in get_service_names_from_volumes_from(service.get('volumes_from', [])) or
+                name == get_service_name_from_net(service.get('net')))
             ]
 
     def visit(n):
@@ -85,7 +99,7 @@ class Project(object):
         project = cls(name, [], client_list)
 
         for srv_dict in service_dicts:
-            if not 'container_name' in srv_dict:
+            if 'container_name' not in srv_dict:
                 srv_dict['container_name'] = srv_dict['name']
             srv_dict['hostname'] = username + '-' + name + '-' + srv_dict['container_name']
 
@@ -114,12 +128,11 @@ class Project(object):
 
             if 'ports' in service_dict:
                 ports = service_dict['ports']
-                if not '4200' in ports:
+                if '4200' not in ports:
                     ports.append('4200')
                     service_dict['ports'] = ports
             else:
-                ports = []
-                ports.append('4200')
+                ports = ['4200']
                 service_dict['ports'] = ports
 
             log.info(service_dict)
