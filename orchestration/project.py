@@ -117,10 +117,6 @@ class Project(object):
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
 
-            # orchestration algorithm
-            index = random.randint(0, 1)
-            cc = Client(client_list[index], config.c_version)
-
             print service_dict
 
             service_dict['name'] = username + "-" + name + "-" + service_dict['name']
@@ -139,6 +135,29 @@ class Project(object):
 
             print service_dict
 
+            if 'hosts' in service_dict:
+                if service_dict['host'] == 'all':
+                    for client in client_list:
+                        cc = Client(client, config.c_version)
+                        project.services.append(
+                            Service(
+                                name=service_dict['name'],
+                                client=cc,
+                                project=name,
+                                network=None,
+                                volume=None,
+                                options=service_dict
+                            )
+                        )
+                    return project
+                else:
+                    index = service_dict['host']
+            else:
+                # orchestration algorithm
+                index = random.randint(0, 1)
+
+            cc = Client(client_list[index], config.c_version)
+
             project.services.append(
                 Service(
                     name=service_dict['name'],
@@ -147,7 +166,6 @@ class Project(object):
                     network=None,
                     volume=None,
                     options=service_dict))
-            # options=**service_dict))
         return project
 
     @classmethod
