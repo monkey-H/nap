@@ -15,6 +15,12 @@ class Service(object):
         self.project = project
         self.cont = Container(client=client, network=network, volume=volume, options=options)
 
+    @classmethod
+    def get_service_by_name(cls, name, client, project, container_name):
+        service = Service(name, client, project)
+        service.cont = Container.getContainerByName(client, container_name)
+        return service
+
     def create(self):
         self.cont.create()
 

@@ -131,7 +131,7 @@ def roll_back(username, password, project_name):
     srv_list = service_list(username, password, project_name)
     if srv_list:
         for service_name in srv_list:
-            url = machine_ip(username, password, project_name, service_name)
+            url = service_ip(username, project_name, service_name)
             if url == '-':
                 continue
             cli = Client(base_url=url, version=config.c_version)
@@ -156,17 +156,15 @@ def container_exists(cli, container_name):
     return False
 
 
-# not use again. services(id, name, projectID, ip)
-def machine_ip(username, project_name, service_name):
+def service_ip(username, project_name, service_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
-    cursor.execute("select id from projects where name='%s' and userID=(select from user where name='%s')"
+    cursor.execute("select id from projects where name='%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
     data = cursor.fetchone()
-    cursor.execute("select ip from machine where id = (select machineID from services where name='%s'"
-                   "and projectID='%d') " % (service_name, data[0]))
+    cursor.execute("select IP from services where name='%s' and projectID='%d'" % (service_name, data[0]))
     data = cursor.fetchone()
-    return data
+    return data[0]
 
 
 def get_machine():
@@ -265,13 +263,15 @@ def create_machine(ip_list):
     db.close()
 
 
-# not use again, all users use one database
 def delete_user(username):
-    db = MySQLdb.connect(config.database_url, config.rootname, config.rootpass)
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
-    cursor.execute("drop user '%s'" % username)
-    cursor.execute("drop database '%s'" % username)
-    cursor.execute("flush privileges")
+    cursor.execute("select id from user where name='%s'" % username)
+    data = cursor.fetchone()
+
+    cursor.execute("delete from services where projectID in (select id from projects where userID='%d')" % data[0])
+    cursor.execute("delete from projects where userID='%d'" % data[0])
+    cursor.execute("delete from user where name='%s'" % username)
     db.commit()
     db.close()
 

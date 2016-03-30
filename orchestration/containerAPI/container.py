@@ -55,6 +55,11 @@ class Container(object):
                 con.image = item['Image']
                 con.cmd = item['Command']
                 con.create_time = item['Created']
+                for port in item['Ports']:
+                    if 'PublicPort' in port:
+                        con.ports[port['PrivatePort']] = port['PublicPort']
+                    else:
+                        con.ports[port['PrivatePort']] = '-'
                 con.ports = item['Ports']
 
                 return con

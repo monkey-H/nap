@@ -21,3 +21,4 @@ def read(file_path):
         srv_dicts.append(srv_dict)
 
     return srv_dicts
+

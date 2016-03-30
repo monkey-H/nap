@@ -180,6 +180,20 @@ class Project(object):
         return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts,
                              client_list=config.client_list)
 
+    @classmethod
+    def get_project_by_name(cls, project_name, service_list):
+        project = Project(project_name, [])
+        for service in service_list:
+            service_name = service['name']
+            service_ip = service['ip']
+
+            cli = Client(service_ip, config.c_version)
+
+            project.services.append(
+                Service.get_service_by_name(service_name, cli, project_name, service_name)
+            )
+        return project
+
     def create(self):
         for service in self.services:
             service.create()
