@@ -5,8 +5,8 @@ import MySQLdb
 from docker import Client
 from orchestration import config
 from orchestration.database import database_update
-from orchestration.containerAPI.container import Container
-from orchestration.containerAPI.client import Client
+from orchestration.container_api.container import Container
+from orchestration.container_api.client import Client
 from orchestration.project import Project
 
 
@@ -68,7 +68,7 @@ def service_list(username, project_name):
         full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
 
         cli = Client(url, config.c_version)
-        con = Container.getContainerByName(cli, full_name)
+        con = Container.get_container_by_name(cli, full_name)
 
         # if not container_exists(cli, full_name):
         #     print 'no container: %s in hosts' % full_name

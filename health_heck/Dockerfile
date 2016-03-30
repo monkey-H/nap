@@ -5,6 +5,7 @@ MAINTAINER < nap 5681713@qq.com>
 
 # requirments
 RUN pip install python-consul docker-py
-COPY healthCheck.py /
 
-ENTRYPOINT ["/usr/local/bin/python", "/healthCheck.py"]
+COPY health_check.py /
+
+ENTRYPOINT ["/usr/local/bin/python", "/health_check.py"]

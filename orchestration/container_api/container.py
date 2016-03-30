@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 
-from network import Network
-from image import Image
 
 from docker.errors import NotFound
 from docker.errors import APIError
 from exception import NoImage
 from exception import StatusError
 
+import config
+from network import Network
+from image import Image
+
+import logging as log
+
 
 class Container(object):
     """
-    Represents a Docker container
+    Wraps a Docker container
     """
 
     def __init__(self, client, options, volume=None, network=None):
@@ -23,7 +27,10 @@ class Container(object):
 
         self.ip = None
         self.id = None
-        self.name = None
+        self.full_name = None
+        self.user_name=None
+        self.project_name=None
+        self.service_name=None
         self.status = None
         self.image = None
         self.cmd = None
@@ -31,7 +38,7 @@ class Container(object):
         self.ports = None
 
     @classmethod
-    def getContainerByName(cls, client, name):
+    def get_container_by_name(cls, client, name):
         cli = client.client
 
         containers = cli.containers(all=True)
@@ -68,6 +75,23 @@ class Container(object):
                 return con
 
         return None
+
+    @classmethod
+    def _parse_container_name(cls, full_name):
+        """
+        :param full_name: svc-num.prj.user
+        :return:
+        """
+        names=str(full_name).split(config.container_name_separator)
+        if not len(names) == 3:
+            log.warning("Bad formatted container name:[%s] " % full_name)
+            return None
+        else:
+            return names
+
+    @classmethod
+    def _join_container_name(cls, service, project, user):
+        return config.container_name_separator.join([service, project, user])
 
     def exists(self, name):
         cli = self.client
@@ -143,7 +167,7 @@ class Container(object):
             privileged = self.options['privileged']
 
         # todo -v 挂载volume
-        # todo 注意：vol只能在创建容器的时候制定，不像network那样既可以创建时指定，也可以启动后attach
+        # todo 注意：vol只能在创建容器的时候制定，不像network那样既可以创建时指定也可以启动后attach
 
         volumes_from = None
         if 'volumes_from' in self.options:

@@ -12,7 +12,7 @@ sudo pip install docker-py
 ```
 
 ## 参考文档
-+ [Docker RESTful API v1.22](https://docs.docker.com/engine/reference/api/docker_remote_api_v1.22/)
++ [Docker Restful API v1.22](https://docs.docker.com/engine/reference/api/docker_remote_api_v1.22/)
 + [docker-py doc](http://docker-py.readthedocs.org/en/stable/)
 + [rkt Doc](https://github.com/coreos/rkt/blob/master/Documentation/commands.md)
 + [lxc Doc](https://linuxcontainers.org/lxc/documentation/#python)
