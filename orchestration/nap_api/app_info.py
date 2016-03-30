@@ -1,22 +1,10 @@
 import commands
 import MySQLdb
-import os
-import shutil
 
 from docker import Client
 from orchestration.config import config
 from orchestration.database import database_update
 
-# c_version='1.21'
-# split_mark = '-'
-# rootname = 'root'
-# rootpass = 'monkey'
-# hostname = 'monkey'
-# container_path = '/nap'
-# volume_image = 'docker.iwanna.xyz:5000/hmonkey/busybox'
-# database_url='114.212.189.147'
-# client_list = ['114.212.189.147:2376', '114.212.189.140:2376']
-# project_path='/home/monkey/Documents/filebrowser'
 
 def tuple_in_tuple(db_tuple):
     ret_data = []
@@ -24,15 +12,21 @@ def tuple_in_tuple(db_tuple):
         ret_data.append(item[0])
     return ret_data
 
+
 def create_user(username, password):
     for client in config.client_list:
         # still need mfsmount
-        a,b = commands.getstatusoutput("ssh %s@%s 'docker run -d --name %s -v %s/%s:%s %s'" % (config.hostname, client.split(":")[0], username + "_volume", config.project_path, username, config.container_path, config.volume_image))
+        commands.getstatusoutput("ssh %s@%s 'docker run -d --name %s -v %s/%s:%s %s'" % (
+            config.hostname, client.split(":")[0], username + "_volume", config.project_path, username,
+            config.container_path, config.volume_image))
 
-    commands.getstatusoutput("ssh %s@%s 'docker network create -d overlay %s'" % (config.hostname, config.client_list[0].split(":")[0], username))
-    commands.getstatusoutput("ssh %s@%s 'cd %s && mkdir %s'" % (config.hostname, config.client_list[0].split(":")[0], config.project_path, username))
+    commands.getstatusoutput("ssh %s@%s 'docker network create -d overlay %s'" % (
+        config.hostname, config.client_list[0].split(":")[0], username))
+    commands.getstatusoutput("ssh %s@%s 'cd %s && mkdir %s'" % (
+        config.hostname, config.client_list[0].split(":")[0], config.project_path, username))
 
     return database_update.create_user(username, password)
+
 
 def delete_user(username):
     try:
@@ -42,21 +36,26 @@ def delete_user(username):
 
     for client in config.client_list:
         # still need mfsmount
-        a,b = commands.getstatusoutput("ssh %s@%s 'docker rm %s'" % (config.hostname, client.split(":")[0], username + "_volume"))
+        a, b = commands.getstatusoutput(
+            "ssh %s@%s 'docker rm %s'" % (config.hostname, client.split(":")[0], username + "_volume"))
 
-    commands.getstatusoutput("ssh %s@%s 'cd %s && rm -r %s'" % (config.hostname, client.split(":")[0], config.project_path, username))
-    a,b = commands.getstatusoutput("ssh %s@%s 'docker network rm %s'" % (config.hostname, config.client_list[0].split(":")[0], username))
+    commands.getstatusoutput(
+        "ssh %s@%s 'cd %s && rm -r %s'" % (config.hostname, client.split(":")[0], config.project_path, username))
+    a, b = commands.getstatusoutput(
+        "ssh %s@%s 'docker network rm %s'" % (config.hostname, config.client_list[0].split(":")[0], username))
 
     return True, 'Delete user success'
+
 
 def service_name_list(username, password, project_name):
     data = database_update.service_list(username, password, project_name)
 
     return data
 
+
 def service_list(username, password, project_name):
     name_list = database_update.service_list(username, password, project_name)
-    if name_list == None:
+    if name_list is None:
         return '-'
 
     srv_list = []
@@ -68,12 +67,10 @@ def service_list(username, password, project_name):
             print 'no container: %s in hosts' % full_name
             continue
 
-        srv_dict = {}
-        srv_dict['name'] = service_name
-        srv_dict['ip'] = str(url).split(":")[0]
-        srv_dict['status'] = get_status(username, password, project_name, service_name)
+        srv_dict = {'name': service_name, 'ip': str(url).split(":")[0],
+                    'status': get_status(username, password, project_name, service_name)}
         ports = get_port(username, password, project_name, service_name)
-        if ports == None:
+        if ports is None:
             srv_dict['port'] = '-'
             srv_dict['shell'] = '-'
         elif not len(ports):
@@ -82,7 +79,7 @@ def service_list(username, password, project_name):
         else:
             expose_port = []
             for key in ports:
-                if not ports[key] == None:
+                if not ports[key] is None:
                     if key == '4200/tcp':
                         srv_dict['shell'] = ports[key][0]['HostPort']
                     else:
@@ -93,12 +90,13 @@ def service_list(username, password, project_name):
         srv_list.append(srv_dict)
     return srv_list
 
-def project_list(username, password, begin, length):
 
+def project_list(username, password, begin, length):
     data = database_update.project_list(username, password, begin, length)
     return data
 
-#注意，这里以后用project stop 来实现
+
+# 注意，这里以后用project stop 来实现
 def destroy_project(username, password, project_name):
     # if os.path.exists('%s/%s/%s' % (config.project_path, username, project_name)):
     #     shutil.rmtree('%s/%s/%s' % (config.project_path, username, project_name))
@@ -121,6 +119,7 @@ def destroy_project(username, password, project_name):
 
     return True, 'Destroy project: %s success' % project_name
 
+
 def get_status(username, password, project_name, service_name):
     cip = database_update.machine_ip(username, password, project_name, service_name)
     if cip == '-':
@@ -134,6 +133,7 @@ def get_status(username, password, project_name, service_name):
         return detail['State']['Status']
     else:
         return 'no such container'
+
 
 def get_port(username, password, project_name, service_name):
     cip = database_update.machine_ip(username, password, project_name, service_name)
@@ -149,12 +149,14 @@ def get_port(username, password, project_name, service_name):
     else:
         return 'no such container'
 
+
 def container_exists(cli, container_name):
     containers = cli.containers(all=True)
     for k in containers:
         if '/' + container_name in k['Names']:
             return True
     return False
+
 
 def get_logs(username, password, project_name, service_name):
     cip = database_update.machine_ip(username, password, project_name, service_name)
