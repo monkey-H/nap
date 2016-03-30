@@ -116,6 +116,7 @@ class Project(object):
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
 
+            container_name = service_dict['container_name']
             service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
             service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
             # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
@@ -138,6 +139,7 @@ class Project(object):
 
             if 'host' in service_dict:
                 if service_dict['host'] == 'all':
+                    no = 0
                     for client in client_list:
                         cc = Client(client, config.c_version)
                         project.services.append(
@@ -150,6 +152,8 @@ class Project(object):
                                 options=service_dict
                             )
                         )
+                        database_update.create_service(username, container_name+no, client, name)
+                        no += 1
                     return project
                 else:
                     ip = service_dict['host']
@@ -168,7 +172,8 @@ class Project(object):
                     network=None,
                     volume=None,
                     options=service_dict))
-            database_update.create_service(username, service_dict['container_name'], ip, name)
+
+            database_update.create_service(username, container_name, ip, name)
         return project
 
     @classmethod

@@ -1,8 +1,9 @@
+# coding=utf-8
 import commands
 import MySQLdb
 
 from docker import Client
-from orchestration.config import config
+from orchestration import config
 from orchestration.database import database_update
 from orchestration.containerAPI.container import Container
 from orchestration.containerAPI.client import Client
@@ -63,8 +64,8 @@ def service_list(username, project_name):
 
     srv_list = []
     for service_name in name_list:
-        url = database_update.service_ip(username, project_name, service_name)
-        full_name = service_name + config.split_mark + project_name + config.split_mark + username
+        url = database_update.service_ip(username, project_name, service_name[0])
+        full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
 
         cli = Client(url, config.c_version)
         con = Container.getContainerByName(cli, full_name)
@@ -73,7 +74,7 @@ def service_list(username, project_name):
         #     print 'no container: %s in hosts' % full_name
         #     continue
 
-        srv_dict = {'name': service_name, 'ip': str(url).split(":")[0],
+        srv_dict = {'name': service_name[0], 'ip': str(url).split(":")[0],
                     'status': con.status, 'ports': con.ports}
 
         if len(con.ports) == 0:
@@ -110,8 +111,8 @@ def service_list(username, project_name):
     return srv_list
 
 
-def project_list(username, password, begin, length):
-    data = database_update.project_list(username, password, begin, length)
+def project_list(username, begin, length):
+    data = database_update.project_list(username, begin, length)
     return data
 
 

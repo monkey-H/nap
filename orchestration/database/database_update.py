@@ -78,7 +78,7 @@ def service_list(username, project_name):
                    % (project_name, username))
     data = cursor.fetchall()
 
-    cursor.execute("select name, IP from services where projectID='%d'" % data[0])
+    cursor.execute("select name from services where projectID='%d'" % data[0])
     data = cursor.fetchall()
     return data
     # clause = "select name from services " \
@@ -162,6 +162,7 @@ def service_ip(username, project_name, service_name):
     cursor.execute("select id from projects where name='%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
     data = cursor.fetchone()
+    print service_name
     cursor.execute("select IP from services where name='%s' and projectID='%d'" % (service_name, data[0]))
     data = cursor.fetchone()
     return data[0]

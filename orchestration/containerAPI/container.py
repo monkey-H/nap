@@ -40,10 +40,13 @@ class Container(object):
                 detail = cli.inspect_container(item['Id'])
 
                 network_name = detail['HostConfig']['NetworkMode']
-                network_detail = cli.inspect_network(network_name)
-                network_driver = network_detail['Driver']
 
-                network = Network(network_name, network_driver)
+                if not network_name == "default":
+                    network_detail = cli.inspect_network(network_name)
+                    network_driver = network_detail['Driver']
+                    network = Network(network_name, network_driver)
+                else:
+                    network = None
                 volume = None
 
                 con = Container(client, None, volume, network)
@@ -55,12 +58,12 @@ class Container(object):
                 con.image = item['Image']
                 con.cmd = item['Command']
                 con.create_time = item['Created']
+                con.ports = {}
                 for port in item['Ports']:
                     if 'PublicPort' in port:
-                        con.ports[port['PrivatePort']] = port['PublicPort']
+                        con.ports[str(port['PrivatePort'])] = port['PublicPort']
                     else:
-                        con.ports[port['PrivatePort']] = '-'
-                con.ports = item['Ports']
+                        con.ports[str(port['PrivatePort'])] = '-'
 
                 return con
 
@@ -146,7 +149,7 @@ class Container(object):
         if 'volumes_from' in self.options:
             volumes_from = self.options['volumes_from']
 
-        print port_bindings
+        print(port_bindings)
         params['host_config'] = self.client.create_host_config(port_bindings=port_bindings, network_mode=network_mode,
                                                                binds=binds, privileged=privileged,
                                                                volumes_from=volumes_from, mem_limit=mem_limit)
