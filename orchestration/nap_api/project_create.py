@@ -30,13 +30,9 @@ from requests.exceptions import ReadTimeout
 log = logging.getLogger(__name__)
 
 
-# base_path = '/home/monkey/Documents/filebrowser'
-# container_path = '/nap'
-# database_url = '114.212.189.147'
-
 # git clone from url into file
-def create_project_from_url(username, password, project_name, url):
-    if database_update.project_exists(username, password, project_name):
+def create_project_from_url(username, project_name, url):
+    if database_update.project_exists(username, project_name):
         return False, "Project: %s already exists! try another name and try again" % project_name
 
     if os.path.exists('%s/%s/%s' % (config.base_path, username, project_name)):
@@ -53,28 +49,29 @@ def create_project_from_url(username, password, project_name, url):
     # except:
     #     return False, "git clone error, please connect administrator for information"
 
-    database_update.create_project(username, password, project_name, url)
+    database_update.create_project(username, project_name, url)
 
-    return create_project_from_file(username, password, project_name)
+    return create_project_from_file(username, project_name)
 
 
-def create_project_from_filebrowser(username, password, project_name):
-    if database_update.project_exists(username, password, project_name):
+def create_project_from_file_browser(username, project_name):
+    if database_update.project_exists(username, project_name):
         return False, "Project: %s already exists! try another name and try again" % project_name
 
-    database_update.create_project(username, password, project_name, "create from filebrowser")
+    url = "create from file browser"
+    database_update.create_project(username, project_name, url)
 
-    return create_project_from_file(username, password, project_name)
+    return create_project_from_file(username, project_name)
 
 
 # file_path include config.base_path, username, project_name
-def create_project_from_file(username, password, project_name):
+def create_project_from_file(username, project_name):
     argv = get_argv(username, project_name)
     if not len(argv) == 0:
         return 'Argv', argv
     else:
         project_path = config.base_path + '/' + username + '/' + project_name
-        return create_project_exceptions(username, password, project_path, project_name)
+        return create_project_exceptions(username, project_path, project_name)
 
 
 # file_path as before
@@ -109,14 +106,14 @@ def get_argv(username, project_name):
 
 
 # file_path as before
-def replace_argv(username, password, project_name, argv):
+def replace_argv(username, project_name, argv):
     if not argv:
         return False, 'no argv given'
     else:
         project_path = config.base_path + '/' + username + '/' + project_name
         for item in argv:
             replace_string(project_path, item, argv[item])
-        return create_project_exceptions(username, password, project_path, project_name)
+        return create_project_exceptions(username, project_path, project_name)
 
 
 def replace_string(file_path, key, value):
@@ -135,51 +132,25 @@ def replace_string(file_path, key, value):
     os.rename(file_path + '/tmp.yml', file_path + '/docker-compose.yml')
 
 
-# 注意，old->new 这里的new_main将被替换掉
-def create_project_exceptions(username, password, project_path, project_name):
+def create_project_exceptions(username, project_path, project_name):
     try:
         print project_path
-        project = Project.from_file(username, password, project_path)
+        project = Project.from_file(username, project_path)
         project.start()
-        # new_main(project_path, username, password)
-    # except KeyboardInterrupt:
-    #     logs = roll_back(username, password, project_name)
-    #     # shutil.rmtree(project_path)
-    #     return False, logs + 'Keyboard Aborting'
-    # except (UserError, NoSuchService, ConfigurationError, legacy.LegacyError) as e:
-    #     logs = roll_back(username, password, project_name)
-    #     # shutil.rmtree(project_path)
-    #     return False, logs + e.msg
     except DependencyError as e:
-        logs = roll_back(username, password, project_name)
+        logs = roll_back(username, project_name)
         return False, logs + e.msg
     except ConfigurationError as e:
-        logs = roll_back(username, password, project_name)
+        logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
         return False, logs + e.msg
     except APIError as e:
-        logs = roll_back(username, password, project_name)
+        logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
         log.error(e.explanation)
         return False, logs + e.explanation
-        # sys.exit(1)
-        # except BuildError as e:
-        #     logs = roll_back(username, password, project_name)
-        #     log.error("Service '%s' failed to build: %s" % (e.service.name, e.reason))
-        #     # shutil.rmtree(project_path)
-        # return False, logs + "Service '%s' failed to build: %s" % (e.service.name, e.reason)
-    # except StreamOutputError as e:
-    #     logs = roll_back(username, password, project_name)
-    #     log.error(e)
-    #     # shutil.rmtree(project_path)
-    #     return False, e
-    # except NeedsBuildError as e:
-    #     logs = roll_back(username, password, project_name)
-    #     log.error("Service '%s' needs to be built, but --no-build was passed." % e.service.name)
-    #     # shutil.rmtree(project_path)
-    #     return False, (logs + "Service '%s' needs to be built, but --no-build was passed." % e.service.name)
     except ReadTimeout:
-        logs = roll_back(username, password, project_name)
+        logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
         log.error(
             "An HTTP request took too long to complete. Retry with --verbose to obtain debug information.\n"

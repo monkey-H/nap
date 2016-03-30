@@ -21,5 +21,5 @@ def read(file_path):
             srv_dict[key] = config[item][key]
         srv_dicts.append(srv_dict)
 
-    schedule.random(srv_dicts)
+    schedule.random_schedule(srv_dicts)
     return srv_dicts
