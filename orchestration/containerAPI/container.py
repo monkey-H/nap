@@ -127,11 +127,12 @@ class Container(object):
         if 'mac_address' in self.options:
             params['mac_address'] = self.options['mac_address']
 
-        if self.network:
+        network_mode = None
+        if self.network is not None:
             network_mode = self.network.name
 
         binds = None
-        if self.volume.vol:
+        if self.volume is not None:
             binds = self.volume.vol
 
         privileged = False

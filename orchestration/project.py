@@ -7,7 +7,6 @@ from orchestration.exception import DependencyError
 from orchestration.database import database_update
 
 import logging
-import random
 from containerAPI.client import Client
 
 log = logging.getLogger(__name__)
@@ -101,7 +100,7 @@ class Project(object):
         for srv_dict in service_dicts:
             if 'container_name' not in srv_dict:
                 srv_dict['container_name'] = srv_dict['name']
-            srv_dict['hostname'] = username + '-' + name + '-' + srv_dict['container_name']
+            srv_dict['hostname'] = srv_dict['container_name'] + config.split_mark + name + config.split_mark + username
 
         for srv_dict in service_dicts:
             if 'command' in srv_dict:
@@ -109,7 +108,7 @@ class Project(object):
                 if "{{" in command:
                     for s_dict in service_dicts:
                         before = s_dict['container_name']
-                        after = username + "-" + name + "-" + before
+                        after = before + config.split_mark + name + config.split_mark + username
                         before = "{{" + before + "}}"
                         command = command.replace(before, after)
                 srv_dict['command'] = command
@@ -117,10 +116,10 @@ class Project(object):
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
 
-            print service_dict
-
-            service_dict['name'] = username + "-" + name + "-" + service_dict['name']
-            service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
+            service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
+            service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
+            # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
+            # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
 
             if 'ports' in service_dict:
                 ports = service_dict['ports']
@@ -169,10 +168,11 @@ class Project(object):
                     network=None,
                     volume=None,
                     options=service_dict))
+            database_update.create_service(username, service_dict['container_name'], ip, name)
         return project
 
     @classmethod
-    def from_file(cls, username, password, project_path):
+    def from_file(cls, username, project_path):
         srv_dicts = file_treat.read(project_path)
 
         if project_path[-1] == '/':
@@ -180,7 +180,7 @@ class Project(object):
         else:
             project_name = project_path.split('/')[-1]
 
-        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts)
+        return cls.from_dict(username=username, name=project_name, service_dicts=srv_dicts)
 
     @classmethod
     def get_project_by_name(cls, project_name, service_list):

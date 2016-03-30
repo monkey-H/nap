@@ -1,8 +1,9 @@
 from orchestration.project import Project
+from orchestration.database import database_update
 import sys
 
-p = Project.from_file('hello', 'nju', sys.path[0])
+database_update.create_project('test', 'test', 'hello from nju')
+p = Project.from_file('test', '/home/monkey/Documents/just4happy/orchestration/test')
 
-print p.services[0].cont.service
 p.create()
 p.start()
