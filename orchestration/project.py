@@ -8,7 +8,7 @@ from orchestration.database import database_update
 
 import logging
 import random
-from containerAPI.client import Client
+from container_api.client import Client
 
 log = logging.getLogger(__name__)
 

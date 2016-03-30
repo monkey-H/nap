@@ -4,8 +4,8 @@ import MySQLdb
 from docker import Client
 from orchestration.config import config
 from orchestration.database import database_update
-from orchestration.containerAPI.container import Container
-from orchestration.containerAPI.client import Client
+from orchestration.container_api.container import Container
+from orchestration.container_api.client import Client
 from orchestration.project import Project
 
 

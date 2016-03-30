@@ -7,13 +7,15 @@ class NoImage(Exception):
         return self.msg
 
 
-class NoCommand(Exception):
-    def __init__(self, name):
-        self.name = name
-        self.msg = "No given command in service: %s" % self.name
-
-    def __str__(self):
-        return self.msg
+# command is optional
+#
+# class NoCommand(Exception):
+#     def __init__(self, name):
+#         self.name = name
+#         self.msg = "No given command in service: %s" % self.name
+#
+#     def __str__(self):
+#         return self.msg
 
 
 class ConfigurationError(Exception):
