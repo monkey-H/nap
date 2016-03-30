@@ -167,13 +167,22 @@ def service_ip(username, project_name, service_name):
     return data[0]
 
 
-def get_machine():
+def get_machines():
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select ip from machine")
     data = cursor.fetchall()
     db.close()
     return tuple_in_tuple(data)
+
+
+def get_machine(index):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select ip from machine limit %d,1" % index)
+    data = cursor.fetchone()
+    db.close()
+    return data[0]
 
 
 def create_project(username, project_name, url):

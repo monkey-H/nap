@@ -1,6 +1,7 @@
 import yaml
 import os
 from orchestration.exception import ConfigurationError
+import schedule
 
 
 def read(file_path):
@@ -20,5 +21,5 @@ def read(file_path):
             srv_dict[key] = config[item][key]
         srv_dicts.append(srv_dict)
 
+    schedule.random(srv_dicts)
     return srv_dicts
-

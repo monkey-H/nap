@@ -4,6 +4,7 @@ from orchestration import config
 from orchestration.exception import ConfigError
 
 from orchestration.exception import DependencyError
+from orchestration.database import database_update
 
 import logging
 import random
@@ -89,14 +90,13 @@ class Project(object):
     contains some services
     """
 
-    def __init__(self, name, services, client_list):
+    def __init__(self, name, services):
         self.name = name
         self.services = services
-        self.client_list = client_list
 
     @classmethod
-    def from_dict(cls, username, password, name, service_dicts, client_list):
-        project = cls(name, [], client_list)
+    def from_dict(cls, username, name, service_dicts):
+        project = cls(name, [])
 
         for srv_dict in service_dicts:
             if 'container_name' not in srv_dict:
@@ -135,7 +135,9 @@ class Project(object):
 
             print service_dict
 
-            if 'hosts' in service_dict:
+            client_list = database_update.get_machines()
+
+            if 'host' in service_dict:
                 if service_dict['host'] == 'all':
                     for client in client_list:
                         cc = Client(client, config.c_version)
@@ -151,12 +153,13 @@ class Project(object):
                         )
                     return project
                 else:
-                    index = service_dict['host']
+                    ip = service_dict['host']
             else:
                 # orchestration algorithm
-                index = random.randint(0, 1)
+                # index = random.randint(0, 1)
+                print 'no schedule'
 
-            cc = Client(client_list[index], config.c_version)
+            cc = Client(ip, config.c_version)
 
             project.services.append(
                 Service(
@@ -177,8 +180,7 @@ class Project(object):
         else:
             project_name = project_path.split('/')[-1]
 
-        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts,
-                             client_list=config.client_list)
+        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts)
 
     @classmethod
     def get_project_by_name(cls, project_name, service_list):
