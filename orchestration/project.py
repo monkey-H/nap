@@ -122,10 +122,10 @@ class Project(object):
             service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
             # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
             # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
-            print service_dict
+            # print service_dict
 
-            service_dict['name'] = username + "-" + name + "-" + service_dict['name']
-            service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
+            # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
+            # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
 
             if 'ports' in service_dict:
                 ports = service_dict['ports']
@@ -182,7 +182,7 @@ class Project(object):
         return project
 
     @classmethod
-    def from_file(cls, username, password, project_path):
+    def from_file(cls, username, project_path):
         srv_dicts = file_treat.read(project_path)
 
         if project_path[-1] == '/':
@@ -190,7 +190,7 @@ class Project(object):
         else:
             project_name = project_path.split('/')[-1]
 
-        return cls.from_dict(username=username, password=password, name=project_name, service_dicts=srv_dicts)
+        return cls.from_dict(username=username, name=project_name, service_dicts=srv_dicts)
 
     @classmethod
     def get_project_by_name(cls, project_name, service_list):

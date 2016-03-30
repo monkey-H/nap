@@ -78,6 +78,9 @@ def service_list(username, project_name):
                    % (project_name, username))
     data = cursor.fetchall()
 
+    if len(data) == 0:
+        return None
+
     cursor.execute("select name from services where projectID='%d'" % data[0])
     data = cursor.fetchall()
     return data
@@ -202,6 +205,8 @@ def delete_project(username, project_name):
     cursor = db.cursor()
     cursor.execute("select id from user where name='%s'" % username)
     data = cursor.fetchone()
+    if len(data) == 0:
+        return
     cursor.execute("delete from projects where name ='%s' and userID='%d'" % (project_name, data[0]))
     db.commit()
     db.close()
@@ -291,6 +296,8 @@ def project_list(username, begin, length):
     cursor = db.cursor()
     cursor.execute("select id from user where name='%s'" % username)
     data = cursor.fetchone()
+    if len(data) == 0:
+        return None
     cursor.execute("select name, url from projects where userID = '%d' limit %d,%d" % (data[0], begin, length))
     data = cursor.fetchall()
     db.close()

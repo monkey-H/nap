@@ -18,7 +18,7 @@ class Service(object):
     @classmethod
     def get_service_by_name(cls, name, client, project, container_name):
         service = Service(name, client, project)
-        service.cont = Container.getContainerByName(client, container_name)
+        service.cont = Container.get_container_by_name(client, container_name)
         return service
 
     def create(self):

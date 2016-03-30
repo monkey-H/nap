@@ -68,6 +68,7 @@ def service_list(username, project_name):
         full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
 
         cli = Client(url, config.c_version)
+        print (full_name, url)
         con = Container.get_container_by_name(cli, full_name)
 
         # if not container_exists(cli, full_name):
@@ -117,7 +118,8 @@ def project_list(username, begin, length):
 
 
 # 注意，这里以后用project stop 来实现
-def destroy_project(username, password, project_name):
+# 已经用project stop 实现
+def destroy_project(username, project_name):
     # if os.path.exists('%s/%s/%s' % (config.project_path, username, project_name)):
     #     shutil.rmtree('%s/%s/%s' % (config.project_path, username, project_name))
 
@@ -126,8 +128,10 @@ def destroy_project(username, password, project_name):
     service_name = service_name_list(username, project_name)
 
     for service in service_name:
-        ip = database_update.service_ip(username, project_name, service)
-        item = {"name": service, "ip": ip}
+        print ("service: %s" % service[0])
+        ip = database_update.service_ip(username, project_name, service[0])
+        item = {"name": service[0] + config.split_mark + project_name + config.split_mark + username, "ip": ip}
+        print (item)
         services.append(item)
 
     project = Project.get_project_by_name(project_name, services)
@@ -150,8 +154,8 @@ def destroy_project(username, password, project_name):
     #             cli.stop(container=full_name)
     #             cli.remove_container(container=full_name)
 
-    database_update.delete_project(username, project_name)
     database_update.delete_service(username, project_name)
+    database_update.delete_project(username, project_name)
 
     return True, 'Destroy project: %s success' % project_name
 
