@@ -77,7 +77,7 @@ def create_project_from_file(username, project_name):
 # file_path as before
 def get_argv(username, project_name):
     project_path = config.base_path + '/' + username + '/' + project_name
-    original_file = open(project_path + '/docker-compose.yml')
+    original_file = open(project_path + '/nap-compose.yml')
     temp_file = open(project_path + '/tmp.yml', 'w')
 
     argv = []
@@ -95,8 +95,8 @@ def get_argv(username, project_name):
 
     original_file.close()
     temp_file.close()
-    os.remove(project_path + '/docker-compose.yml')
-    os.rename(project_path + '/tmp.yml', project_path + '/docker-compose.yml')
+    os.remove(project_path + '/nap-compose.yml')
+    os.rename(project_path + '/tmp.yml', project_path + '/nap-compose.yml')
 
     argv = list(set(argv))
     rel = []
@@ -117,7 +117,7 @@ def replace_argv(username, project_name, argv):
 
 
 def replace_string(file_path, key, value):
-    original_file = open(file_path + '/docker-compose.yml')
+    original_file = open(file_path + '/nap-compose.yml')
     temp_file = open(file_path + '/tmp.yml', 'w')
     while 1:
         line = original_file.readline()
@@ -128,14 +128,15 @@ def replace_string(file_path, key, value):
         temp_file.write(line)
     original_file.close()
     temp_file.close()
-    os.remove(file_path + '/docker-compose.yml')
-    os.rename(file_path + '/tmp.yml', file_path + '/docker-compose.yml')
+    os.remove(file_path + '/nap-compose.yml')
+    os.rename(file_path + '/tmp.yml', file_path + '/nap-compose.yml')
 
 
 def create_project_exceptions(username, project_path, project_name):
     try:
         print project_path
         project = Project.from_file(username, project_path)
+        project.create()
         project.start()
     except DependencyError as e:
         logs = roll_back(username, project_name)
