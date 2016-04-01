@@ -7,10 +7,10 @@ from orchestration.exception import ConfigurationError
 
 
 def read(file_path):
-    filename = file_path + '/docker-compose.yml'
+    filename = file_path + '/nap-compose.yml'
 
     if not os.path.isfile(filename):
-        raise ConfigurationError("no docker-compose.yml file found")
+        raise ConfigurationError("no nap-compose.yml file found")
 
     f = open(filename)
     config = yaml.safe_load(f)

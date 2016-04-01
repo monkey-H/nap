@@ -210,7 +210,7 @@ def get_logs(username, project_name, service_name):
     cli = Client(cip, config.c_version)
     full_name = service_name + config.split_mark + project_name + config.split_mark + username
 
-    con = Container.getContainerByName(cli, full_name)
+    con = Container.get_container_by_name(cli, full_name)
 
     return con.client.logs(con.id)
 
