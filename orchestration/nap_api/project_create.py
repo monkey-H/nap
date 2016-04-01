@@ -8,7 +8,7 @@ import shutil
 from orchestration import config
 from orchestration.project import Project
 
-from git import Repo
+from git import Repo #pip pygit
 from git.exc import GitCommandError
 from orchestration.database.database_update import roll_back
 

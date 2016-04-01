@@ -1,7 +1,9 @@
-import yaml
 import os
+
+import yaml #pip install pyyaml
+
+from orchestration import schedule
 from orchestration.exception import ConfigurationError
-import schedule
 
 
 def read(file_path):
