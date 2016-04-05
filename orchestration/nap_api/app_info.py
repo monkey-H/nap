@@ -75,19 +75,23 @@ def service_list(username, project_name):
         #     print 'no container: %s in hosts' % full_name
         #     continue
 
-        srv_dict = {'name': service_name[0], 'ip': str(url).split(":")[0],
-                    'status': con.status, 'ports': con.ports}
+        srv_dict = {'name': service_name[0], 'ip': str(url).split(":")[0]}
 
-        if len(con.ports) == 0:
-            srv_dict['shell'] = '-'
-            ports = '-'
+        if con is None:
+            srv_dict['status'] = 'not create'
+            srv_dict['ports'] = '-'
         else:
-            ports = con.ports
-            if '4200' in con.ports:
-                srv_dict['shell'] = con.ports['4200']
-                del ports['4200']
+            srv_dict['status'] = con.status
+            if len(con.ports) == 0:
+                srv_dict['shell'] = '-'
+                ports = '-'
+            else:
+                ports = con.ports
+                if '4200' in con.ports:
+                    srv_dict['shell'] = con.ports['4200']
+                    del ports['4200']
 
-        srv_dict['ports'] = ports
+            srv_dict['ports'] = ports
 
         # ports = get_port(username, password, project_name, service_name)
         # if ports is None:
