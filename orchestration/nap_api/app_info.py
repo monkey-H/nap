@@ -166,12 +166,21 @@ def get_project(username, project_name):
     return data
 
 
-# 注意，这里以后用project stop 来实现
-# 已经用project stop 实现
-def destroy_project(username, project_name):
-    # if os.path.exists('%s/%s/%s' % (config.project_path, username, project_name)):
-    #     shutil.rmtree('%s/%s/%s' % (config.project_path, username, project_name))
+def kill_project(username, project_name):
+    services = get_project_service(username, project_name)
 
+    project = Project.get_project_by_name(project_name, services)
+    project.stop()
+
+
+def restart_project(username, project_name):
+    services = get_project_service(username, project_name)
+
+    project = Project.get_project_by_name(project_name, services)
+    project.restart()
+
+
+def get_project_service(username, project_name):
     services = []
 
     service_name = service_name_list(username, project_name)
@@ -183,8 +192,18 @@ def destroy_project(username, project_name):
         print (item)
         services.append(item)
 
-    project = Project.get_project_by_name(project_name, services)
+    return services
 
+
+# 注意，这里以后用project stop 来实现
+# 已经用project stop 实现
+def destroy_project(username, project_name):
+    # if os.path.exists('%s/%s/%s' % (config.project_path, username, project_name)):
+    #     shutil.rmtree('%s/%s/%s' % (config.project_path, username, project_name))
+
+    services = get_project_service(username, project_name)
+
+    project = Project.get_project_by_name(project_name, services)
     project.stop()
     project.remove()
 
