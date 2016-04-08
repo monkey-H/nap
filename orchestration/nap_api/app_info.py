@@ -57,6 +57,40 @@ def service_name_list(username, project_name):
     return data
 
 
+def get_service(username, project_name, service_name):
+    url = database_update.service_ip(username, project_name, service_name)
+    full_name = service_name + config.split_mark + project_name + config.split_mark + username
+
+    cli = Client(url, config.c_version)
+    con = Container.get_container_by_name(cli, full_name)
+
+    srv_dict = {'name': service_name, 'ip': str(url).split(":")[0]}
+
+    if con is None:
+        srv_dict['status'] = 'not create'
+        srv_dict['ports'] = '-'
+        srv_dict['image'] = '-'
+        srv_dict['create_time'] = '-'
+        srv_dict['id'] = '-'
+    else:
+        srv_dict['status'] = con.status
+        srv_dict['image'] = con.image
+        srv_dict['create_time'] = con.create_time
+        srv_dict['id'] = con.id
+        if len(con.ports) == 0:
+            srv_dict['shell'] = '-'
+            ports = '-'
+        else:
+            ports = con.ports
+            if '4200' in con.ports:
+                srv_dict['shell'] = con.ports['4200']
+                del ports['4200']
+
+        srv_dict['ports'] = ports
+
+    return srv_dict
+
+
 def service_list(username, project_name):
     name_list = database_update.service_list(username, project_name)
     if name_list is None:
@@ -80,8 +114,14 @@ def service_list(username, project_name):
         if con is None:
             srv_dict['status'] = 'not create'
             srv_dict['ports'] = '-'
+            srv_dict['image'] = '-'
+            srv_dict['create_time'] = '-'
+            srv_dict['id'] = '-'
         else:
             srv_dict['status'] = con.status
+            srv_dict['image'] = con.image
+            srv_dict['create_time'] = con.create_time
+            srv_dict['id'] = con.id
             if len(con.ports) == 0:
                 srv_dict['shell'] = '-'
                 ports = '-'
@@ -118,6 +158,11 @@ def service_list(username, project_name):
 
 def project_list(username, begin, length):
     data = database_update.project_list(username, begin, length)
+    return data
+
+
+def get_project(username, project_name):
+    data = database_update.get_project(username, project_name)
     return data
 
 

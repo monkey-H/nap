@@ -71,6 +71,25 @@ def database_set(clause):
     db.close()
 
 
+def get_service(username, project_name, service_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name = '%s' and userID=(select id from user where name='%s')"
+                   % (project_name, username))
+    data = cursor.fetchall()
+
+    if len(data) == 0:
+        return None
+
+    cursor.execute("select name from services where projectID='%d' and name = " % data[0])
+    data = cursor.fetchall()
+
+    if data is None:
+        return None
+
+
+
+
 def service_list(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
@@ -291,6 +310,24 @@ def delete_user(username):
     db.close()
 
 
+def get_project(username, project_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from user where name='%s'" % username)
+    data = cursor.fetchone()
+    if len(data) == 0:
+        return None
+
+    cursor.execute("select name,url from projects where userID = '%d' and name = '%s'" % (data[0], project_name))
+
+    data = cursor.fetchone()
+    db.close()
+
+    if data is None:
+        return None
+    return data
+
+
 def project_list(username, begin, length):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
@@ -298,7 +335,9 @@ def project_list(username, begin, length):
     data = cursor.fetchone()
     if len(data) == 0:
         return None
+
     cursor.execute("select name, url from projects where userID = '%d' limit %d,%d" % (data[0], begin, length))
+
     data = cursor.fetchall()
     db.close()
     return data

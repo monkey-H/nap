@@ -22,25 +22,33 @@ class Service(object):
         return service
 
     def create(self):
-        self.cont.create()
+        if self.cont is not None:
+            self.cont.create()
 
     def start(self):
-        self.cont.start()
+        if self.cont is not None:
+            self.cont.start()
 
     def stop(self):
-        self.cont.stop()
+        if self.cont is not None:
+            self.cont.stop()
 
     def pause(self):
-        self.cont.pause()
+        if self.cont is not None:
+            self.cont.pause()
 
     def unpause(self):
-        self.cont.pause()
+        if self.cont is not None:
+            self.cont.pause()
 
     def kill(self):
-        self.cont.kill()
+        if self.cont is not None:
+            self.cont.kill()
 
     def remove(self):
-        self.cont.remove()
+        if self.cont is not None:
+            self.cont.remove()
 
     def restart(self):
-        self.cont.restart()
+        if self.cont is not None:
+            self.cont.restart()
