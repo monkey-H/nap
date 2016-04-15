@@ -101,7 +101,7 @@ class Project(object):
         for srv_dict in service_dicts:
             if 'container_name' not in srv_dict:
                 srv_dict['container_name'] = srv_dict['name']
-            srv_dict['hostname'] = username + '-' + name + '-' + srv_dict['container_name']
+            srv_dict['hostname'] = username + config.split_mark + name + config.split_mark + srv_dict['container_name']
 
         for srv_dict in service_dicts:
             if 'command' in srv_dict:
@@ -109,7 +109,7 @@ class Project(object):
                 if "{{" in command:
                     for s_dict in service_dicts:
                         before = s_dict['container_name']
-                        after = username + "-" + name + "-" + before
+                        after = username + config.split_mark + name + config.split_mark + before
                         before = "{{" + before + "}}"
                         command = command.replace(before, after)
                 srv_dict['command'] = command

@@ -1,6 +1,8 @@
 # coding=utf-8
 import commands
 import MySQLdb
+import requests
+import time
 
 from docker import Client
 from orchestration import config
@@ -8,7 +10,6 @@ from orchestration.database import database_update
 from orchestration.container_api.container import Container
 from orchestration.container_api.client import Client
 from orchestration.project import Project
-
 
 def tuple_in_tuple(db_tuple):
     ret_data = []
@@ -102,7 +103,6 @@ def service_list(username, project_name):
         full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
 
         cli = Client(url, config.c_version)
-        print (full_name, url)
         con = Container.get_container_by_name(cli, full_name)
 
         # if not container_exists(cli, full_name):
@@ -186,10 +186,8 @@ def get_project_service(username, project_name):
     service_name = service_name_list(username, project_name)
 
     for service in service_name:
-        print ("service: %s" % service[0])
         ip = database_update.service_ip(username, project_name, service[0])
         item = {"name": service[0] + config.split_mark + project_name + config.split_mark + username, "ip": ip}
-        print (item)
         services.append(item)
 
     return services
@@ -287,3 +285,136 @@ def get_logs(username, project_name, service_name):
     #     return logs
     # else:
     #     return 'no such container'
+
+
+def machine_monitor():
+    machines = database_update.get_machines()
+
+    info = []
+
+    for machine in machines:
+        ip = machine.split(":")[0]
+        # url = 'http://' + ip + ":8080/api/v1.2/containers"
+        url = 'http://114.212.189.147:8080/api/v1.2/containers'
+        response = requests.get(url)
+
+        true = True
+        false = False
+
+        di = eval(response.text)
+
+        cur = di['stats'][-1]
+        pre = di['stats'][-2]
+
+        gap = time_gap(pre['timestamp'], cur['timestamp'])
+
+        core = int(di['spec']['cpu']['mask'].split("-")[1]) + 1
+        print (core)
+
+        print (gap)
+        print (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total']))
+
+        dic = {'memory_usage': cur['memory']['usage'],
+               'memory_total': di['spec']['memory']['limit'],
+               'cpu_usage': (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total'])) / (gap*core),
+               'timestamp': cur['timestamp'],
+               'ip': ip}
+
+        usage = 0
+        total = 0
+        for item in cur['filesystem']:
+            usage += item['usage'];
+            total += item['capacity'];
+            # file_dic = {'filesystem_usage': item['usage'],
+            #             'filesystem_total': item['capacity']}
+
+            # files.append(file_dic)
+
+        dic['filesystem_usage'] = usage
+        dic['filesystem_total'] = total
+
+        info.append(dic)
+
+    return info
+
+
+def container_monitor(username, project_name, service_name):
+    machine = database_update.service_ip(username, project_name, service_name)
+    if machine == '-':
+        return 'no this project or service'
+
+    full_name = service_name + config.split_mark + project_name + config.split_mark + username
+    ip = machine.split(":")[0]
+    url = 'http://' + ip + ":8080/api/v1.2/docker/" + full_name
+
+    response = requests.get(url)
+
+    true = True
+    false = False
+
+    di = eval(response.text)
+    rel = []
+
+    for item in di:
+        for node in di[item]['stats']:
+            dic = {'memory_usage': node['memory']['usage'],
+                   'memory_total': di[item]['spec']['memory']['limit'],
+                   'cpu_usage': node['cpu']['usage']['total'],
+                   'cpu_total': di[item]['spec']['cpu']['limit'],
+                   'timestamp': node['timestamp']}
+
+            # file_usage = []
+            # file_total = []
+            # for files in node['filesystem']:
+            #     file_usage.append(files['usage'])
+            #     file_total.append(files['capacity'])
+            #
+            # dic['file_usage'] = file_usage
+            # dic['file_total'] = file_total
+
+            rel.append(dic)
+
+    re = []
+
+    for index in range(len(rel)):
+        if not index == 0:
+            pre = rel[index-1]
+            cur = rel[index]
+
+            gap = time_gap(pre['timestamp'], cur['timestamp'])
+
+            dic = {'timestamp': cur['timestamp'],
+                   # 'file_usage': float(cur['file_usage'])/float(cur['file_total']),
+                   # 'memory_usage': float(cur['memory_usage'])float(cur['memory_total']),
+                   'memory_usage': format_size(float(cur['memory_usage'])),
+                   'cpu_usage': (float(cur['cpu_usage'])-float(pre['cpu_usage']))/gap}
+
+            re.append(dic)
+
+    return re
+
+
+def time_gap(pre, cur):
+    pre_after = float(pre.split(".")[1][:-1])
+    cur_after = float(cur.split(".")[1][:-1])
+
+    pre_before = pre.split(".")[0]
+    cur_before = cur.split(".")[0]
+
+    pre_time = time.mktime(time.strptime(pre_before, '%Y-%m-%dT%H:%M:%S'))
+    cur_time = time.mktime(time.strptime(cur_before, '%Y-%m-%dT%H:%M:%S'))
+
+    gap = (cur_time - pre_time)*1000000000 + cur_after - pre_after
+
+    return gap
+
+
+def format_size(size):
+    if size < 1000:
+        return size
+    elif size < 1000000:
+        return str('%.2f' % (size / 1000)) + 'k'
+    elif size < 1000000000:
+        return str('%.2f' % (size / 1000000)) + 'm'
+    elif size < 1000000000000:
+        return str('%.2f' % (size / 1000000000)) + 'g'

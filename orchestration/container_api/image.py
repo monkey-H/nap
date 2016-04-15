@@ -73,4 +73,3 @@ class Image(object):
 
         cli.remove_image(image=name)
 
-        return rel

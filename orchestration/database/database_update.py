@@ -88,8 +88,6 @@ def get_service(username, project_name, service_name):
         return None
 
 
-
-
 def service_list(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
@@ -184,7 +182,6 @@ def service_ip(username, project_name, service_name):
     cursor.execute("select id from projects where name='%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
     data = cursor.fetchone()
-    print service_name
     cursor.execute("select IP from services where name='%s' and projectID='%d'" % (service_name, data[0]))
     data = cursor.fetchone()
     return data[0]
@@ -213,7 +210,6 @@ def create_project(username, project_name, url):
     cursor = db.cursor()
     cursor.execute("select id from user where name='%s'" % username)
     data = cursor.fetchone()
-    print data[0]
     cursor.execute("insert into projects(name, userID, url) values('%s', '%d', '%s')" % (project_name, data[0], url))
     db.commit()
     db.close()
