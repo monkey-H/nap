@@ -20,5 +20,11 @@ from orchestration.nap_api import app_info
 # print (app_info.restart_project('test', 'p1'))
 # print (app_info.get_service('test', 'p1', 'master'))
 
-print (app_info.machine_monitor())
+# print (app_info.machine_monitor())
 #print (app_info.container_monitor('test', 'p2', 'slave1'))
+
+print (app_info.get_networks('test'))
+app_info.create_network('test', 'diff')
+print (app_info.get_networks('test'))
+# app_info.delete_network('test', 'diff')
+print (app_info.get_networks('test'))

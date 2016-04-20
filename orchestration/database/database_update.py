@@ -337,3 +337,36 @@ def project_list(username, begin, length):
     data = cursor.fetchall()
     db.close()
     return data
+
+
+def get_networks(username):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select name from network where userName='%s'" % username)
+    data = cursor.fetchall()
+
+    if len(data) == 0:
+        return None
+
+    return tuple_in_tuple(data)
+
+
+def get_network(username, network):
+    # TODO
+    return 'todo'
+
+
+def create_network(username, network):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("insert into network(name, userName) values('%s', '%s')" % (network, username))
+    db.commit()
+    db.close()
+
+
+def delete_network(username, network):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("delete from network where name='%s' and userName='%s'" % (network, username))
+    db.commit()
+    db.close()

@@ -10,6 +10,9 @@ from orchestration.database import database_update
 from orchestration.container_api.container import Container
 from orchestration.container_api.client import Client
 from orchestration.project import Project
+from orchestration.container_api.network import Network
+from orchestration.container_api.client import Client
+
 
 def tuple_in_tuple(db_tuple):
     ret_data = []
@@ -294,8 +297,8 @@ def machine_monitor():
 
     for machine in machines:
         ip = machine.split(":")[0]
-        # url = 'http://' + ip + ":8080/api/v1.2/containers"
-        url = 'http://114.212.189.147:8080/api/v1.2/containers'
+        url = 'http://' + ip + ":8080/api/v1.2/containers"
+        # url = 'http://114.212.189.147:8080/api/v1.2/containers'
         response = requests.get(url)
 
         true = True
@@ -316,7 +319,7 @@ def machine_monitor():
 
         dic = {'memory_usage': cur['memory']['usage'],
                'memory_total': di['spec']['memory']['limit'],
-               'cpu_usage': (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total'])) / (gap*core),
+               'cpu_usage': (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total'])) / (gap * core),
                'timestamp': cur['timestamp'],
                'ip': ip}
 
@@ -378,7 +381,7 @@ def container_monitor(username, project_name, service_name):
 
     for index in range(len(rel)):
         if not index == 0:
-            pre = rel[index-1]
+            pre = rel[index - 1]
             cur = rel[index]
 
             gap = time_gap(pre['timestamp'], cur['timestamp'])
@@ -387,7 +390,7 @@ def container_monitor(username, project_name, service_name):
                    # 'file_usage': float(cur['file_usage'])/float(cur['file_total']),
                    # 'memory_usage': float(cur['memory_usage'])float(cur['memory_total']),
                    'memory_usage': format_size(float(cur['memory_usage'])),
-                   'cpu_usage': (float(cur['cpu_usage'])-float(pre['cpu_usage']))/gap}
+                   'cpu_usage': (float(cur['cpu_usage']) - float(pre['cpu_usage'])) / gap}
 
             re.append(dic)
 
@@ -404,7 +407,7 @@ def time_gap(pre, cur):
     pre_time = time.mktime(time.strptime(pre_before, '%Y-%m-%dT%H:%M:%S'))
     cur_time = time.mktime(time.strptime(cur_before, '%Y-%m-%dT%H:%M:%S'))
 
-    gap = (cur_time - pre_time)*1000000000 + cur_after - pre_after
+    gap = (cur_time - pre_time) * 1000000000 + cur_after - pre_after
 
     return gap
 
@@ -418,3 +421,23 @@ def format_size(size):
         return str('%.2f' % (size / 1000000)) + 'm'
     elif size < 1000000000000:
         return str('%.2f' % (size / 1000000000)) + 'g'
+
+
+def get_networks(username):
+    return database_update.get_networks(username)
+
+
+def get_network(username, network):
+    return database_update.get_networks(username, network)
+
+
+def create_network(username, network):
+    client = Client("114.212.189.147:2376", config.c_version).client
+    Network.create_network(client, network, 'overlay')
+    database_update.create_network(username, network)
+
+
+def delete_network(username, network):
+    client = Client("114.212.189.147:2376", config.c_version).client
+    Network.remove_network(client, network)
+    database_update.delete_network(username, network)

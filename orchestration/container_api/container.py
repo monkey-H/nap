@@ -28,9 +28,9 @@ class Container(object):
         self.ip = None
         self.id = None
         self.full_name = None
-        self.user_name=None
-        self.project_name=None
-        self.service_name=None
+        self.user_name = None
+        self.project_name = None
+        self.service_name = None
         self.status = None
         self.image = None
         self.cmd = None
@@ -82,7 +82,7 @@ class Container(object):
         :param full_name: svc-num.prj.user
         :return:
         """
-        names=str(full_name).split(config.container_name_separator)
+        names = str(full_name).split(config.container_name_separator)
         if not len(names) == 3:
             log.warning("Bad formatted container name:[%s] " % full_name)
             return None
