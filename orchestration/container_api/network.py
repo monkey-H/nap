@@ -3,7 +3,7 @@ class Network(object):
     Represents a docker network
     """
 
-    def __init__(self, name, driver):
+    def __init__(self, name, driver='overlay'):
         self.name = name
         self.driver = driver
 

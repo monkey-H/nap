@@ -13,6 +13,60 @@ from image import Image
 import logging as log
 
 
+def get_port_bindings(ports):
+    dic = {}
+    for port in ports:
+        items = str(port).split(":")
+        if len(items) == 1:
+            dic[port] = None
+        elif len(items) == 2:
+            dic[items[0]] = items[1]
+        else:
+            if len(items[1]) == 0:
+                dic[items[0] + '/' + items[2]] = None
+            else:
+                dic[items[0] + '/' + items[2]] = items[1]
+
+    return dic
+
+
+def get_ports(ports):
+    li = []
+    for port in ports:
+        items = str(port).split(":")
+        if len(items) == 3:
+            a = (items[0], items[2])
+            li.append(a)
+        else:
+            li.append(items[0])
+
+    return li
+
+
+def get_volumes(volumes):
+    li = []
+    for volume in volumes:
+        items = volume.split(":")
+        li.append(items[0])
+
+    return li
+
+
+def get_volumes_bindings(volumes):
+    dic = {}
+
+    for volume in volumes:
+        items = volume.split(":")
+        if len(items) == 1:
+            print "volume wrong"
+        elif len(items) == 2:
+            dic[items[1]] = {'bind': items[0], 'mode': 'rw'}
+        else:
+            dic[items[1]] = {'bind': items[0], 'mode': items[2]}
+
+    return dic
+
+
 class Container(object):
     """
     Wraps a Docker container
@@ -27,7 +81,7 @@ class Container(object):
 
         self.ip = None
         self.id = None
-        self.full_name = None
+        self.name = None
         self.user_name = None
         self.project_name = None
         self.service_name = None
@@ -122,10 +176,8 @@ class Container(object):
         # ports binding need
         port_bindings = None
         if 'ports' in self.options:
-            params['ports'] = self.options['ports']
-            port_bindings = {}
-            for item in self.options['ports']:
-                port_bindings[item] = None
+            params['ports'] = get_ports(self.options['ports'])
+            port_bindings = get_port_bindings(self.options['ports'])
 
         if 'hostname' in self.options:
             params['hostname'] = self.options['hostname']
@@ -160,7 +212,8 @@ class Container(object):
 
         binds = None
         if self.volume is not None:
-            binds = self.volume.vol
+            binds = get_volumes_bindings(self.volume.vol)
+            params['volumes'] = get_volumes(self.volume.vol)
 
         privileged = False
         if 'privileged' in self.options:
@@ -178,6 +231,10 @@ class Container(object):
                                                                binds=binds, privileged=privileged,
                                                                volumes_from=volumes_from, mem_limit=mem_limit)
 
+        print(params)
+        print(binds)
+        print(port_bindings)
+
         container = self.client.create_container(**params)
 
         self.id = container.get('Id')
@@ -191,7 +248,7 @@ class Container(object):
 
         detail = self.client.inspect_container(container=self.id)
 
-        self.name = detail['Name']
+        self.name = detail['Name'][1:]
         self.status = detail['State']['Status']
 
         command = ""

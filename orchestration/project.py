@@ -6,8 +6,10 @@ from orchestration.exception import ConfigError
 from orchestration.exception import DependencyError
 from orchestration.database import database_update
 
+from orchestration.container_api.volume import Volume
+from orchestration.container_api.network import Network
+
 import logging
-import random
 from container_api.client import Client
 
 log = logging.getLogger(__name__)
@@ -119,7 +121,8 @@ class Project(object):
 
             container_name = service_dict['container_name']
             service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
-            service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
+            service_dict['container_name'] = service_dict[
+                                                 'container_name'] + config.split_mark + name + config.split_mark + username
             # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
             # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
             # print service_dict
@@ -127,14 +130,11 @@ class Project(object):
             # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
             # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
 
-            if 'ports' in service_dict:
-                ports = service_dict['ports']
-                if '4200' not in ports:
-                    ports.append('4200')
-                    service_dict['ports'] = ports
-            else:
-                ports = ['4200']
-                service_dict['ports'] = ports
+            # if 'ports' in service_dict:
+            #     service_dict['ports'].append('4200')
+            # else:
+            #     ports = ['4200']
+            #     service_dict['ports'] = ports
 
             log.info(service_dict)
 
@@ -152,12 +152,12 @@ class Project(object):
                                 name=service_dict['name'],
                                 client=cc,
                                 project=name,
-                                network=None,
-                                volume=None,
+                                network=Network(service_dict['network']),
+                                volume=Volume(service_dict['volumes']),
                                 options=service_dict
                             )
                         )
-                        database_update.create_service(username, container_name+no, client, name)
+                        database_update.create_service(username, container_name + no, client, name)
                         no += 1
                     return project
                 else:
@@ -174,8 +174,8 @@ class Project(object):
                     name=service_dict['name'],
                     client=cc,
                     project=name,
-                    network=None,
-                    volume=None,
+                    network=Network(service_dict['network']),
+                    volume=Volume(service_dict['volumes']),
                     options=service_dict))
 
             database_update.create_service(username, container_name, ip, name)
@@ -183,7 +183,7 @@ class Project(object):
 
     @classmethod
     def from_file(cls, username, project_path):
-        srv_dicts = file_treat.read(project_path)
+        srv_dicts = file_treat.read(project_path, username)
 
         if project_path[-1] == '/':
             project_name = project_path.split('/')[-2]
@@ -213,6 +213,16 @@ class Project(object):
     def start(self):
         for service in self.services:
             service.start()
+
+        for service in self.services:
+            if service.cont is not None:
+                print (service.cont.name)
+                tt = service.cont.client.exec_create(container=service.cont.name, cmd='shellinaboxd -t -b')
+                service.cont.client.exec_start(exec_id=tt, detach=True)
+
+                ttt = service.cont.client.exec_create(container=service.cont.name,
+                                                      cmd='/bin/bash -c \"useradd admin && echo -e \\\"admin\\\\nadmin\\\" | passwd admin\"')
+                service.cont.client.exec_start(exec_id=ttt, detach=True, stream=True, tty=True)
 
     def stop(self):
         for service in self.services:
