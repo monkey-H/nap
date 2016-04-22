@@ -23,6 +23,9 @@ def read(file_path, username):
         for key in configs[item]:
             srv_dict[key] = configs[item][key]
 
+        if 'network' not in srv_dict:
+            srv_dict['network'] = username
+
         if 'ports' in srv_dict:
             srv_dict['ports'].append(4200)
         else:

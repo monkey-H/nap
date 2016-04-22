@@ -142,6 +142,10 @@ class Project(object):
 
             client_list = database_update.get_machines()
 
+            vv = None
+            if 'volumes' in service_dict:
+                vv = Volume(service_dict['volumes'])
+
             if 'host' in service_dict:
                 if service_dict['host'] == 'all':
                     no = 0
@@ -153,7 +157,7 @@ class Project(object):
                                 client=cc,
                                 project=name,
                                 network=Network(service_dict['network']),
-                                volume=Volume(service_dict['volumes']),
+                                volume=vv,
                                 options=service_dict
                             )
                         )
@@ -175,7 +179,7 @@ class Project(object):
                     client=cc,
                     project=name,
                     network=Network(service_dict['network']),
-                    volume=Volume(service_dict['volumes']),
+                    volume=vv,
                     options=service_dict))
 
             database_update.create_service(username, container_name, ip, name)
