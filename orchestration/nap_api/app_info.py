@@ -3,8 +3,10 @@ import commands
 import MySQLdb
 import requests
 import time
-
+import os
+from fs.osfs import OSFS
 from docker import Client
+
 from orchestration import config
 from orchestration.database import database_update
 from orchestration.container_api.container import Container
@@ -199,8 +201,10 @@ def get_project_service(username, project_name):
 # 注意，这里以后用project stop 来实现
 # 已经用project stop 实现
 def destroy_project(username, project_name):
-    # if os.path.exists('%s/%s/%s' % (config.project_path, username, project_name)):
-    #     shutil.rmtree('%s/%s/%s' % (config.project_path, username, project_name))
+    user_path = config.project_path + "/" + username
+    home_dir = OSFS(user_path)
+    if home_dir.exists(project_name):
+        home_dir.removedir(project_name, force=True)
 
     services = get_project_service(username, project_name)
 

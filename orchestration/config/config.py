@@ -7,7 +7,35 @@ from orchestration import config
 from orchestration.exception import ConfigurationError
 
 
-def read(file_path, username):
+def table_treat(username, project_name, table):
+    services = []
+
+    for service in table:
+        if 'network' not in service:
+            service['network'] = username
+
+        if 'ports' in service:
+            ports = [4200]
+            for item in service['ports']:
+                ports.append(item['container_port'] + ":" + item['host_port'] + ":" + item['protocol'])
+            service['ports'] = ports
+        else:
+            service['ports'] = [4200]
+
+        if 'volumes' in service:
+            volumes = []
+            for item in service['volumes']:
+                volumes.append(item['container_path'] + ":" + config.project_path + "/" + username + "/" + project_name + item['host_path'] + ":" + item['mode'])
+            service['volumes'] = volumes
+
+        services.append(service)
+
+    schedule.random_schedule(services)
+
+    return services
+
+
+def read(file_path, username, project_name):
     filename = file_path + '/nap-compose.yml'
 
     if not os.path.isfile(filename):
@@ -39,7 +67,7 @@ def read(file_path, username):
                     new_volumes.append(volume)
                     continue
                 else:
-                    items[1] = config.project_path + "/" + username + items[1]
+                    items[1] = config.project_path + "/" + username + "/" + project_name + items[1]
                 new_volume = items[0] + ":" + items[1]
                 if len(items) == 3:
                     new_volume = new_volume + ":" + items[2]

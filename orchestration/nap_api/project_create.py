@@ -30,6 +30,21 @@ from requests.exceptions import ReadTimeout
 log = logging.getLogger(__name__)
 
 
+def create_project_from_table(username, project_name, table):
+    if database_update.project_exists(username, project_name):
+        return False, "Project: %s already exists! try another name and try again" % project_name
+
+    if os.path.exists('%s/%s/%s' % (config.base_path, username, project_name)):
+        return False, "File: %s already exists! try another name and try again" % project_name
+
+    os.mkdir("%s/%s/%s" % (config.base_path, username, project_name))
+    project_path = config.base_path + '/' + username + '/' + project_name
+
+    database_update.create_project(username, project_name, 'create from table')
+
+    return create_project_exceptions(username, project_path, table, project_name, 'table')
+
+
 # git clone from url into file
 def create_project_from_url(username, project_name, url):
     if database_update.project_exists(username, project_name):
@@ -71,7 +86,7 @@ def create_project_from_file(username, project_name):
         return 'Argv', argv
     else:
         project_path = config.base_path + '/' + username + '/' + project_name
-        return create_project_exceptions(username, project_path, project_name)
+        return create_project_exceptions(username, project_path, None, project_name, 'file')
 
 
 # file_path as before
@@ -113,7 +128,7 @@ def replace_argv(username, project_name, argv):
         project_path = config.base_path + '/' + username + '/' + project_name
         for item in argv:
             replace_string(project_path, item, argv[item])
-        return create_project_exceptions(username, project_path, project_name)
+        return create_project_exceptions(username, project_path, None, project_name, 'file')
 
 
 def replace_string(file_path, key, value):
@@ -132,26 +147,31 @@ def replace_string(file_path, key, value):
     os.rename(file_path + '/tmp.yml', file_path + '/nap-compose.yml')
 
 
-def create_project_exceptions(username, project_path, project_name):
+def create_project_exceptions(username, project_path, table, project_name, create_flag):
     try:
-        print project_path
-        project = Project.from_file(username, project_path)
+        if create_flag == 'file':
+            project = Project.from_file(username, project_path)
+        else:
+            project = Project.from_table(username, project_name, table)
         project.create()
         project.start()
     except DependencyError as e:
-        logs = roll_back(username, project_name)
-        return False, logs + e.msg
+        # logs = roll_back(username, project_name)
+        # return False, logs + e.msg
+        return False, e.msg
     except ConfigurationError as e:
-        logs = roll_back(username, project_name)
+        # logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
-        return False, logs + e.msg
+        # return False, logs + e.msg
+        return False, e.msg
     except APIError as e:
-        logs = roll_back(username, project_name)
+        # logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
         log.error(e.explanation)
-        return False, logs + e.explanation
+        # return False, logs + e.explanation
+        return False, e.explanation
     except ReadTimeout:
-        logs = roll_back(username, project_name)
+        # logs = roll_back(username, project_name)
         # shutil.rmtree(project_path)
         log.error(
             "An HTTP request took too long to complete. Retry with --verbose to obtain debug information.\n"

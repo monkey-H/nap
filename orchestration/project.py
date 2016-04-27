@@ -103,7 +103,7 @@ class Project(object):
         for srv_dict in service_dicts:
             if 'container_name' not in srv_dict:
                 srv_dict['container_name'] = srv_dict['name']
-            srv_dict['hostname'] = username + config.split_mark + name + config.split_mark + srv_dict['container_name']
+            srv_dict['hostname'] = srv_dict['container_name'] + config.split_mark + name + config.split_mark + username
 
         for srv_dict in service_dicts:
             if 'command' in srv_dict:
@@ -111,7 +111,7 @@ class Project(object):
                 if "{{" in command:
                     for s_dict in service_dicts:
                         before = s_dict['container_name']
-                        after = username + config.split_mark + name + config.split_mark + before
+                        after = before + config.split_mark + name + config.split_mark + username
                         before = "{{" + before + "}}"
                         command = command.replace(before, after)
                 srv_dict['command'] = command
@@ -121,8 +121,7 @@ class Project(object):
 
             container_name = service_dict['container_name']
             service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
-            service_dict['container_name'] = service_dict[
-                                                 'container_name'] + config.split_mark + name + config.split_mark + username
+            service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
             # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
             # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
             # print service_dict
@@ -187,14 +186,21 @@ class Project(object):
 
     @classmethod
     def from_file(cls, username, project_path):
-        srv_dicts = file_treat.read(project_path, username)
 
         if project_path[-1] == '/':
             project_name = project_path.split('/')[-2]
         else:
             project_name = project_path.split('/')[-1]
 
+        srv_dicts = file_treat.read(project_path, username, project_name)
+
         return cls.from_dict(username=username, name=project_name, service_dicts=srv_dicts)
+
+    @classmethod
+    def from_table(cls, username, project_name, table):
+        srv_dicts = file_treat.table_treat(username, project_name, table)
+
+        return cls.from_dict(username, project_name, srv_dicts)
 
     @classmethod
     def get_project_by_name(cls, project_name, service_list):

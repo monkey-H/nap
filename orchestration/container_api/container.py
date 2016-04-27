@@ -20,12 +20,12 @@ def get_port_bindings(ports):
         if len(items) == 1:
             dic[port] = None
         elif len(items) == 2:
-            dic[items[0]] = items[1]
+            dic[items[0]] = int(items[1])
         else:
             if len(items[1]) == 0:
                 dic[items[0] + '/' + items[2]] = None
             else:
-                dic[items[0] + '/' + items[2]] = items[1]
+                dic[items[0] + '/' + items[2]] = int(items[1])
 
     return dic
 
@@ -35,10 +35,10 @@ def get_ports(ports):
     for port in ports:
         items = str(port).split(":")
         if len(items) == 3:
-            a = (items[0], items[2])
+            a = (int(items[0]), items[2])
             li.append(a)
         else:
-            li.append(items[0])
+            li.append(int(items[0]))
 
     return li
 
@@ -261,6 +261,9 @@ class Container(object):
         self.ports = detail['NetworkSettings']['Ports']
 
     def stop(self):
+        print self.name
+        print self.ip
+        print self.client.base_url
         self.client.stop(container=self.id)
 
     def pause(self):

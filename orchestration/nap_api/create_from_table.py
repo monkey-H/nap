@@ -5,6 +5,7 @@ import os
 import shutil
 from git import Repo
 
+
 def create_project_from_table(username, password, project_name, table):
     if database_update.project_exists(username, password, project_name):
         return False, "Project: %s already exists! try another name and try again" % project_name
@@ -89,6 +90,7 @@ def create_project_from_table(username, password, project_name, table):
     compose_file.close()
 
     create_project_from_filebrowser(username, password, project_name)
+
 
 def write_yml(compose_file, project_path, service):
     for item in service:
