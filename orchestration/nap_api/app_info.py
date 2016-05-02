@@ -445,3 +445,13 @@ def delete_network(username, network):
     client = Client("114.212.189.147:2376", config.c_version).client
     Network.remove_network(client, network)
     database_update.delete_network(username, network)
+
+
+def get_yaml(username, project_name):
+    user_path = config.project_path + "/" + username
+    file_dir = OSFS(user_path)
+    if file_dir.exists(project_name + "/nap-compose.yml"):
+        f = file(config.project_path + "/" + username + "/" + project_name + '/nap-compose.yml')
+        return f.read()
+
+    return "yaml"
