@@ -18,9 +18,9 @@ def get_port_bindings(ports):
     for port in ports:
         items = str(port).split(":")
         if len(items) == 1:
-            dic[port] = None
+            dic[int(port)] = None
         elif len(items) == 2:
-            dic[items[0]] = int(items[1])
+            dic[int(items[0])] = int(int(items[1]))
         else:
             if len(items[1]) == 0:
                 dic[items[0] + '/' + items[2]] = None

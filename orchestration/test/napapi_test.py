@@ -7,7 +7,7 @@ from orchestration.nap_api import app_info
 #
 # app_info.destroy_project('test', 'test2')
 # app_info.destroy_project('test', 'hbase')
-app_info.destroy_project('test', 'test4')
+app_info.destroy_project('test', 'testt')
 #
 # print(app_info.project_list('test', 0, 10))
 # print(app_info.service_list('test', 'test'))

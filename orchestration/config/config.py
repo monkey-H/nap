@@ -9,18 +9,27 @@ from orchestration.exception import ConfigurationError
 
 def table_treat(username, project_name, table):
     services = []
+    services_yaml = {}
+
+    for service in table:
+        services_yaml[service['name']] = service
+
+    file_path = config.project_path + "/" + username + "/" + project_name + "/nap-compose.yml"
+    f = open(file_path, 'w')
+
+    yaml.dump(services_yaml, f)
 
     for service in table:
         if 'network' not in service:
             service['network'] = username
 
         if 'ports' in service:
-            ports = [4200]
+            ports = ['4200']
             for item in service['ports']:
                 ports.append(item['container_port'] + ":" + item['host_port'] + ":" + item['protocol'])
             service['ports'] = ports
         else:
-            service['ports'] = [4200]
+            service['ports'] = ['4200']
 
         if 'volumes' in service:
             volumes = []
@@ -55,9 +64,9 @@ def read(file_path, username, project_name):
             srv_dict['network'] = username
 
         if 'ports' in srv_dict:
-            srv_dict['ports'].append(4200)
+            srv_dict['ports'].append('4200')
         else:
-            srv_dict['ports'] = [4200]
+            srv_dict['ports'] = ['4200']
 
         if 'volumes' in srv_dict:
             new_volumes = []
