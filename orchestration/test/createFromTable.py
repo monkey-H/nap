@@ -3,7 +3,7 @@ from orchestration.nap_api.project_create import create_project_from_table
 table = []
 t = {}
 t['name'] = 'master'
-t['cpu_shares'] = 1024
+t['cpu_shares'] = '1024'
 t['mem_limit'] = '32m'
 t['command'] = '/usr/sbin/sshd -D'
 t['image'] = 'docker.iwanna.xyz:5000/hmonkey/mpi:v1'
@@ -13,7 +13,7 @@ table.append(t)
 
 t = {}
 t['name'] = 'slave'
-t['cpu_shares'] = 1024
+t['cpu_shares'] = '1024'
 t['mem_limit'] = '32m'
 t['command'] = '/usr/sbin/sshd -D'
 t['image'] = 'docker.iwanna.xyz:5000/hmonkey/mpi:v1'

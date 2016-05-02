@@ -192,7 +192,7 @@ class Container(object):
             params['entrypoint'] = self.options['entrypoint']
 
         if 'cpu_shares' in self.options:
-            params['cpu_shares'] = self.options['cpu_shares']
+            params['cpu_shares'] = int(self.options['cpu_shares'])
 
         if 'container_name' in self.options:
             params['name'] = self.options['container_name']
