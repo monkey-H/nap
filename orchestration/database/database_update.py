@@ -370,3 +370,13 @@ def delete_network(username, network):
     cursor.execute("delete from network where name='%s' and userName='%s'" % (network, username))
     db.commit()
     db.close()
+
+
+def get_images(username):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select name from image where user='%s' or user='admin'" % username)
+    data = cursor.fetchall()
+    db.close()
+
+    return tuple_in_tuple(data)

@@ -455,3 +455,8 @@ def get_yaml(username, project_name):
         return f.read()
 
     return "yaml"
+
+
+def get_images(username):
+    data = database_update.get_images(username)
+    return data
