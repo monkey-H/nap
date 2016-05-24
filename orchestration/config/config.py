@@ -1,9 +1,11 @@
 import os
 
-import yaml #pip install pyyaml
+import yaml  # pip install pyyaml
 
+from docker import Client
 from orchestration import schedule
 from orchestration import config
+from orchestration.database import database_update
 from orchestration.exception import ConfigurationError
 
 
@@ -17,7 +19,7 @@ def table_treat(username, project_name, table):
     file_path = config.project_path + "/" + username + "/" + project_name + "/nap-compose.yml"
     f = open(file_path, 'w')
 
-    yaml.dump(services_yaml, f)
+    yaml.safe_dump(services_yaml, f)
 
     for service in table:
         if 'network' not in service:
@@ -34,7 +36,9 @@ def table_treat(username, project_name, table):
         if 'volumes' in service:
             volumes = []
             for item in service['volumes']:
-                volumes.append(item['container_path'] + ":" + config.project_path + "/" + username + "/" + project_name + item['host_path'] + ":" + item['mode'])
+                volumes.append(
+                    item['container_path'] + ":" + config.project_path + "/" + username + "/" + project_name + item[
+                        'host_path'] + ":" + item['mode'])
             service['volumes'] = volumes
 
         services.append(service)
@@ -60,6 +64,33 @@ def read(file_path, username, project_name):
         for key in configs[item]:
             srv_dict[key] = configs[item][key]
 
+        if 'stateless' not in srv_dict:
+            srv_dicts.append(srv_dict)
+        elif srv_dict['stateless']:
+            scale = int(srv_dict['scale'])
+            port = srv_dict['port']
+            write_to_ct(str(port), item, project_name, username)
+
+            for i in range(scale):
+                srv = {}
+                for key in srv_dict:
+                    srv[key] = srv_dict[key]
+
+                print srv
+
+                srv['name'] = item + str(i)
+                env = []
+                if 'environment' in srv:
+                    env = srv['environment']
+
+                env.append('SERVICE_NAME=' + item + '-' + project_name + '-' + username)
+                srv['environment'] = env
+
+                srv_dicts.append(srv)
+        else:
+            print (srv_dict['stateless'])
+
+    for srv_dict in srv_dicts:
         if 'network' not in srv_dict:
             srv_dict['network'] = username
 
@@ -67,6 +98,9 @@ def read(file_path, username, project_name):
             srv_dict['ports'].append('4200')
         else:
             srv_dict['ports'] = ['4200']
+
+        if 'port' in srv_dict:
+            srv_dict['ports'].append(srv_dict['port'])
 
         if 'volumes' in srv_dict:
             new_volumes = []
@@ -85,7 +119,28 @@ def read(file_path, username, project_name):
 
             srv_dict['volumes'] = new_volumes
 
-        srv_dicts.append(srv_dict)
-
     schedule.random_schedule(srv_dicts)
+
+    print srv_dicts
+
     return srv_dicts
+
+
+def write_to_ct(port, service_name, project_name, username):
+    machines = database_update.get_machines()
+    for machine in machines:
+        cli = Client(base_url=machine, version=config.c_version)
+        tt = cli.exec_create(container='nginx',
+                             cmd='/bin/bash -c \"cd /etc/consul-templates && sh refresh.sh %s %s %s %s\"' % (
+                                 port, service_name, project_name, username))
+        cli.exec_start(exec_id=tt, detach=True)
+
+
+def delete_from_ct(project_name, username):
+    machines = database_update.get_machines()
+    for machine in machines:
+        cli = Client(base_url=machine, version=config.c_version)
+        tt = cli.exec_create(container='nginx',
+                             cmd='/bin/bash -c \"cd /etc/consul-templates && bash delete.sh %s-%s\"' % (
+                                 project_name, username))
+        cli.exec_start(exec_id=tt, detach=True)

@@ -4,7 +4,6 @@ import random
 
 def random_schedule(service_list):
     machines = database_update.get_machines()
-    print len(machines)
     for service in service_list:
         if 'host' not in service:
             index = random.randint(0, len(machines)-1)

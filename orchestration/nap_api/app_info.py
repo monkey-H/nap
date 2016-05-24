@@ -3,14 +3,12 @@ import commands
 import MySQLdb
 import requests
 import time
-import os
 from fs.osfs import OSFS
-from docker import Client
+from docker import Client as dClient
 
 from orchestration import config
 from orchestration.database import database_update
 from orchestration.container_api.container import Container
-from orchestration.container_api.client import Client
 from orchestration.project import Project
 from orchestration.container_api.network import Network
 from orchestration.container_api.client import Client
@@ -190,6 +188,9 @@ def get_project_service(username, project_name):
 
     service_name = service_name_list(username, project_name)
 
+    if service_name is None:
+        return None
+
     for service in service_name:
         ip = database_update.service_ip(username, project_name, service[0])
         item = {"name": service[0] + config.split_mark + project_name + config.split_mark + username, "ip": ip}
@@ -208,9 +209,14 @@ def destroy_project(username, project_name):
 
     services = get_project_service(username, project_name)
 
+    if services is None:
+        return True, 'OK'
+
     project = Project.get_project_by_name(project_name, services)
     project.stop()
     project.remove()
+
+    delete_from_ct(project_name, username)
 
     # data = database_update.service_list(username, project_name)
     #
@@ -231,6 +237,16 @@ def destroy_project(username, project_name):
     database_update.delete_project(username, project_name)
 
     return True, 'Destroy project: %s success' % project_name
+
+
+def delete_from_ct(project_name, username):
+    machines = database_update.get_machines()
+    for machine in machines:
+        cli = dClient(base_url=machine, version=config.c_version)
+        tt = cli.exec_create(container='nginx',
+                             cmd='/bin/bash -c \"cd /etc/consul-templates && bash delete.sh %s-%s\"' % (
+                                 project_name, username))
+        cli.exec_start(exec_id=tt, detach=True)
 
 
 # not use again

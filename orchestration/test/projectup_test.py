@@ -14,7 +14,7 @@ from orchestration.nap_api import project_create
 # p.create()
 # p.start()
 
-database_update.create_project('test', 'test', 'hello from nap')
+database_update.create_project('test', 'pp', 'hello from nap')
 p = Project.from_file('test', '/home/monkey/Documents/test')
 
 p.create()

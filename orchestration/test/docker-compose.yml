@@ -1,5 +1,7 @@
 web:
   image: docker.iwanna.xyz:5000/hmonkey/webapp:v2
+  stateless: true
+  scale: 2
   ports:
     - 5000
     - 20
