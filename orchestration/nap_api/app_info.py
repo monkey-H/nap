@@ -293,6 +293,8 @@ def container_exists(cli, container_name):
 def get_logs(username, project_name, service_name):
     cip = database_update.service_ip(username, project_name, service_name)
 
+    print cip
+
     if cip == '-':
         return 'no such project or service'
 
@@ -301,7 +303,9 @@ def get_logs(username, project_name, service_name):
 
     con = Container.get_container_by_name(cli, full_name)
 
-    return con.client.logs(con.id)
+    print con.id
+
+    return con.client.logs(container=con.id, tail=100)
 
     # if container_exists(cli, full_name):
     #     logs = cli.logs(container=full_name)
