@@ -121,13 +121,26 @@ def create_service(username, service_name, machine_ip, project_name):
     db.close()
 
 
-def delete_service(username, project_name):
+# delete services in database
+def delete_services(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
                    % (project_name, username))
     data = cursor.fetchall()
     cursor.execute("delete from services where projectID = '%s'" % data[0])
+    db.commit()
+    db.close()
+
+
+# delete one service in database
+def delete_service(username, project_name, service_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
+                   % (project_name, username))
+    data = cursor.fetchall()
+    cursor.execute("delete from services where name='%s' and projectID = '%s'" % (service_name, data[0]))
     db.commit()
     db.close()
 

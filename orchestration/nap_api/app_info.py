@@ -233,7 +233,7 @@ def destroy_project(username, project_name):
     #             cli.stop(container=full_name)
     #             cli.remove_container(container=full_name)
 
-    database_update.delete_service(username, project_name)
+    database_update.delete_services(username, project_name)
     database_update.delete_project(username, project_name)
 
     return True, 'Destroy project: %s success' % project_name
@@ -350,8 +350,8 @@ def machine_monitor():
         usage = 0
         total = 0
         for item in cur['filesystem']:
-            usage += item['usage'];
-            total += item['capacity'];
+            usage += item['usage']
+            total += item['capacity']
             # file_dic = {'filesystem_usage': item['usage'],
             #             'filesystem_total': item['capacity']}
 

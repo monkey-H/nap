@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # print database_update.project_exists('test', 'projects')
     # database_update.create_service('test', 'service', '114.212.189.147:2376', 'project')
     # print database_update.service_list('test', 'project')
-    # print database_update.delete_service('test', 'project')
+    # print database_update.delete_services('test', 'project')
     # print database_update.service_list('test', 'project')
     # print database_update.project_list('test', 0, 2)
     # database_update.delete_project('test', 'project')
