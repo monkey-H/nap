@@ -10,7 +10,7 @@ from orchestration.project import Project
 
 from git import Repo #pip pygit
 from git.exc import GitCommandError
-from orchestration.database.database_update import roll_back
+# from orchestration.database.database_update import roll_back
 
 # from orchestration.config.errors import ComposeFileNotFound
 # from orchestration.cli.docopt_command import NoSuchCommand
@@ -178,7 +178,7 @@ def create_project_exceptions(username, project_path, table, project_name, creat
             "If you encounter this issue regularly because of slow network conditions, consider setting "
             "COMPOSE_HTTP_TIMEOUT to a higher value (current value: )."
         )
-        return False, logs + (
+        return False, (
             "An HTTP request took too long to complete. Retry with --verbose to obtain debug information.\n"
             "If you encounter this issue regularly because of slow network conditions, consider setting "
             "COMPOSE_HTTP_TIMEOUT to a higher value (current value: )."

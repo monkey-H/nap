@@ -43,7 +43,7 @@ def table_treat(username, project_name, table):
 
         services.append(service)
 
-    schedule.random_schedule(services)
+    # schedule.random_schedule(services)
 
     return services
 
@@ -64,33 +64,32 @@ def read(file_path, username, project_name):
         for key in configs[item]:
             srv_dict[key] = configs[item][key]
 
-        if 'stateless' not in srv_dict:
-            srv_dicts.append(srv_dict)
-        elif srv_dict['stateless']:
-            scale = int(srv_dict['scale'])
-            port = srv_dict['port']
-            write_to_ct(str(port), item, project_name, username)
-
-            for i in range(scale):
-                srv = {}
-                for key in srv_dict:
-                    srv[key] = srv_dict[key]
-
-                print srv
-
-                srv['name'] = item + str(i)
-                env = []
-                if 'environment' in srv:
-                    env = srv['environment']
-
-                env.append('SERVICE_NAME=' + item + '-' + project_name + '-' + username)
-                srv['environment'] = env
-
-                srv_dicts.append(srv)
-        else:
-            print (srv_dict['stateless'])
-
-    for srv_dict in srv_dicts:
+        # if 'stateless' not in srv_dict:
+        #     srv_dicts.append(srv_dict)
+        # elif srv_dict['stateless']:
+        #     scale = int(srv_dict['scale'])
+        #     port = srv_dict['port']
+        #     write_to_ct(str(port), item, project_name, username)
+        #
+        #     for i in range(scale):
+        #         srv = {}
+        #         for key in srv_dict:
+        #             srv[key] = srv_dict[key]
+        #
+        #         print srv
+        #
+        #         srv['name'] = item + str(i)
+        #         env = []
+        #         if 'environment' in srv:
+        #             env = srv['environment']
+        #
+        #         env.append('SERVICE_NAME=' + item + '-' + project_name + '-' + username)
+        #         srv['environment'] = env
+        #
+        #         srv_dicts.append(srv)
+        # else:
+        #     print (srv_dict['stateless'])
+    # for srv_dict in srv_dicts:
         if 'network' not in srv_dict:
             srv_dict['network'] = username
 
@@ -101,6 +100,9 @@ def read(file_path, username, project_name):
 
         if 'port' in srv_dict:
             srv_dict['ports'].append(srv_dict['port'])
+
+        if 'scale' not in srv_dict:
+            srv_dict['scale'] = 1
 
         if 'volumes' in srv_dict:
             new_volumes = []
@@ -119,7 +121,9 @@ def read(file_path, username, project_name):
 
             srv_dict['volumes'] = new_volumes
 
-    schedule.random_schedule(srv_dicts)
+        srv_dicts.append(srv_dict)
+
+    # schedule.random_schedule(srv_dicts)
 
     print srv_dicts
 

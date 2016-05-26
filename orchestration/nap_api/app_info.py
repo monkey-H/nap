@@ -55,20 +55,87 @@ def delete_user(username):
     return True, 'Delete user success'
 
 
-def service_name_list(username, project_name):
-    data = database_update.service_list(username, project_name)
+def project_list(username, begin, length):
+    data = database_update.project_list(username, begin, length)
+    return data
 
+
+def get_project(username, project_name):
+    data = database_update.get_project(username, project_name)
+    return data
+
+
+def kill_project(username, project_name):
+    project = Project.get_project_by_name(username, project_name)
+    project.kill()
+
+
+def destroy_project(username, project_name):
+
+    user_path = config.project_path + "/" + username
+    home_dir = OSFS(user_path)
+    if home_dir.exists(project_name):
+        home_dir.removedir(project_name, force=True)
+
+    project = Project.get_project_by_name(username, project_name)
+    if project is None:
+        return 'project not found'
+    project.stop()
+    project.remove()
+
+    database_update.delete_project(username, project_name)
+
+    return 'success'
+
+
+def restart_project(username, project_name):
+    project = Project.get_project_by_name(username, project_name)
+    project.restart()
+
+
+def service_list(username, project_name):
+    data = database_update.service_list(username, project_name)
     return data
 
 
 def get_service(username, project_name, service_name):
-    url = database_update.service_ip(username, project_name, service_name)
-    full_name = service_name + config.split_mark + project_name + config.split_mark + username
+    data = database_update.get_service(username, project_name, service_name)
+    return data
+
+
+def kill_service(username, project_name, service_name):
+    return 'todo'
+
+
+def destroy_service(username, project_name, service_name):
+    return 'todo'
+
+
+def restart_service(username, project_name, service_name):
+    return 'todo'
+
+
+def container_list(username, project_name, service_name):
+    name_list = database_update.container_list(username, project_name, service_name)
+
+    if name_list is None:
+        return None
+
+    data = []
+    for container_name in name_list:
+        data.append(get_container(username, project_name, service_name, container_name[0]))
+
+    return data
+
+
+def get_container(username, project_name, service_name, container_name):
+    url = database_update.container_ip(username, project_name, service_name, container_name)
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
 
     cli = Client(url, config.c_version)
     con = Container.get_container_by_name(cli, full_name)
 
-    srv_dict = {'name': service_name, 'ip': str(url).split(":")[0]}
+    srv_dict = {'name': container_name, 'ip': str(url).split(":")[0]}
 
     if con is None:
         srv_dict['status'] = 'not create'
@@ -95,46 +162,76 @@ def get_service(username, project_name, service_name):
     return srv_dict
 
 
-def service_list(username, project_name):
-    name_list = database_update.service_list(username, project_name)
-    if name_list is None:
-        return '-'
+def kill_container(username, project_name, service_name, container_name):
+    ip = database_update.container_ip(username, project_name, service_name, container_name)
+    client = Client(ip, config.c_version)
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
+    cont = Container.get_container_by_name(client, full_name)
+    cont.kill()
 
-    srv_list = []
-    for service_name in name_list:
-        url = database_update.service_ip(username, project_name, service_name[0])
-        full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
 
-        cli = Client(url, config.c_version)
-        con = Container.get_container_by_name(cli, full_name)
+def destroy_container(username, project_name, service_name, container_name):
+    ip = database_update.container_ip(username, project_name, service_name, container_name)
+    client = Client(ip, config.c_version)
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
+    cont = Container.get_container_by_name(client, full_name)
+    cont.remove()
 
-        # if not container_exists(cli, full_name):
-        #     print 'no container: %s in hosts' % full_name
-        #     continue
 
-        srv_dict = {'name': service_name[0], 'ip': str(url).split(":")[0]}
+def restart_container(username, project_name, service_name, container_name):
+    ip = database_update.container_ip(username, project_name, service_name, container_name)
+    client = Client(ip, config.c_version)
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
+    cont = Container.get_container_by_name(client, full_name)
+    cont.restart()
 
-        if con is None:
-            srv_dict['status'] = 'not create'
-            srv_dict['ports'] = '-'
-            srv_dict['image'] = '-'
-            srv_dict['create_time'] = '-'
-            srv_dict['id'] = '-'
-        else:
-            srv_dict['status'] = con.status
-            srv_dict['image'] = con.image
-            srv_dict['create_time'] = con.create_time
-            srv_dict['id'] = con.id
-            if len(con.ports) == 0:
-                srv_dict['shell'] = '-'
-                ports = '-'
-            else:
-                ports = con.ports
-                if '4200' in con.ports:
-                    srv_dict['shell'] = con.ports['4200']
-                    del ports['4200']
 
-            srv_dict['ports'] = ports
+def service_name_list(username, project_name):
+    data = database_update.service_list(username, project_name)
+
+    return data
+
+
+# def service_list(username, project_name):
+#     name_list = database_update.service_list(username, project_name)
+#     if name_list is None:
+#         return '-'
+#
+#     srv_list = []
+#     for service_name in name_list:
+#         url = database_update.service_ip(username, project_name, service_name[0])
+#         full_name = service_name[0] + config.split_mark + project_name + config.split_mark + username
+#
+#         cli = Client(url, config.c_version)
+#         con = Container.get_container_by_name(cli, full_name)
+#
+#         # if not container_exists(cli, full_name):
+#         #     print 'no container: %s in hosts' % full_name
+#         #     continue
+#
+#         srv_dict = {'name': service_name[0], 'ip': str(url).split(":")[0]}
+#
+#         if con is None:
+#             srv_dict['status'] = 'not create'
+#             srv_dict['ports'] = '-'
+#             srv_dict['image'] = '-'
+#             srv_dict['create_time'] = '-'
+#             srv_dict['id'] = '-'
+#         else:
+#             srv_dict['status'] = con.status
+#             srv_dict['image'] = con.image
+#             srv_dict['create_time'] = con.create_time
+#             srv_dict['id'] = con.id
+#             if len(con.ports) == 0:
+#                 srv_dict['shell'] = '-'
+#                 ports = '-'
+#             else:
+#                 ports = con.ports
+#                 if '4200' in con.ports:
+#                     srv_dict['shell'] = con.ports['4200']
+#                     del ports['4200']
+#
+#             srv_dict['ports'] = ports
 
         # ports = get_port(username, password, project_name, service_name)
         # if ports is None:
@@ -155,32 +252,8 @@ def service_list(username, project_name):
         #             expose_port.append('-')
         #     srv_dict['port'] = expose_port
 
-        srv_list.append(srv_dict)
-    return srv_list
-
-
-def project_list(username, begin, length):
-    data = database_update.project_list(username, begin, length)
-    return data
-
-
-def get_project(username, project_name):
-    data = database_update.get_project(username, project_name)
-    return data
-
-
-def kill_project(username, project_name):
-    services = get_project_service(username, project_name)
-
-    project = Project.get_project_by_name(project_name, services)
-    project.stop()
-
-
-def restart_project(username, project_name):
-    services = get_project_service(username, project_name)
-
-    project = Project.get_project_by_name(project_name, services)
-    project.restart()
+        # srv_list.append(srv_dict)
+    # return srv_list
 
 
 def get_project_service(username, project_name):
@@ -201,52 +274,52 @@ def get_project_service(username, project_name):
 
 # 注意，这里以后用project stop 来实现
 # 已经用project stop 实现
-def destroy_project(username, project_name):
-    user_path = config.project_path + "/" + username
-    home_dir = OSFS(user_path)
-    if home_dir.exists(project_name):
-        home_dir.removedir(project_name, force=True)
+# def destroy_project(username, project_name):
+#     user_path = config.project_path + "/" + username
+#     home_dir = OSFS(user_path)
+#     if home_dir.exists(project_name):
+#         home_dir.removedir(project_name, force=True)
+#
+#     services = get_project_service(username, project_name)
+#
+#     if services is None:
+#         return True, 'OK'
+#
+#     project = Project.get_project_by_name(project_name, services)
+#     project.stop()
+#     project.remove()
+#
+#     delete_from_ct(project_name, username)
+#
+#     # data = database_update.service_list(username, project_name)
+#     #
+#     # if data:
+#     #     for service_name in data:
+#     #         url = str(database_update.service_ip(username, project_name, service_name))
+#     #         if url == '-':
+#     #             continue
+#     #         cli = Client(url, config.c_version)
+#     #         full_name = username + config.split_mark + project_name + config.split_mark + service_name
+#     #         con = Container.getContainerByName(cli, full_name)
+#     #         con.stop
+#     #         if container_exists(cli, full_name):
+#     #             cli.stop(container=full_name)
+#     #             cli.remove_container(container=full_name)
+#
+#     database_update.delete_services(username, project_name)
+#     database_update.delete_project(username, project_name)
+#
+#     return True, 'Destroy project: %s success' % project_name
 
-    services = get_project_service(username, project_name)
 
-    if services is None:
-        return True, 'OK'
-
-    project = Project.get_project_by_name(project_name, services)
-    project.stop()
-    project.remove()
-
-    delete_from_ct(project_name, username)
-
-    # data = database_update.service_list(username, project_name)
-    #
-    # if data:
-    #     for service_name in data:
-    #         url = str(database_update.service_ip(username, project_name, service_name))
-    #         if url == '-':
-    #             continue
-    #         cli = Client(url, config.c_version)
-    #         full_name = username + config.split_mark + project_name + config.split_mark + service_name
-    #         con = Container.getContainerByName(cli, full_name)
-    #         con.stop
-    #         if container_exists(cli, full_name):
-    #             cli.stop(container=full_name)
-    #             cli.remove_container(container=full_name)
-
-    database_update.delete_services(username, project_name)
-    database_update.delete_project(username, project_name)
-
-    return True, 'Destroy project: %s success' % project_name
-
-
-def delete_from_ct(project_name, username):
-    machines = database_update.get_machines()
-    for machine in machines:
-        cli = dClient(base_url=machine, version=config.c_version)
-        tt = cli.exec_create(container='nginx',
-                             cmd='/bin/bash -c \"cd /etc/consul-templates && bash delete.sh %s-%s\"' % (
-                                 project_name, username))
-        cli.exec_start(exec_id=tt, detach=True)
+# def delete_from_ct(project_name, username):
+#     machines = database_update.get_machines()
+#     for machine in machines:
+#         cli = dClient(base_url=machine, version=config.c_version)
+#         tt = cli.exec_create(container='nginx',
+#                              cmd='/bin/bash -c \"cd /etc/consul-templates && bash delete.sh %s-%s\"' % (
+#                                  project_name, username))
+#         cli.exec_start(exec_id=tt, detach=True)
 
 
 # not use again
@@ -290,8 +363,8 @@ def container_exists(cli, container_name):
     return False
 
 
-def get_logs(username, project_name, service_name):
-    cip = database_update.service_ip(username, project_name, service_name)
+def get_logs(username, project_name, service_name, container_name):
+    cip = database_update.container_ip(username, project_name, service_name, container_name)
 
     print cip
 
@@ -365,8 +438,8 @@ def machine_monitor():
     return info
 
 
-def container_monitor(username, project_name, service_name):
-    machine = database_update.service_ip(username, project_name, service_name)
+def container_monitor(username, project_name, service_name, container_name):
+    machine = database_update.container_ip(username, project_name, service_name, container_name)
     if machine == '-':
         return 'no this project or service'
 

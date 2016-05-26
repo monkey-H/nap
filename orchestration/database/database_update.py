@@ -1,5 +1,6 @@
 from docker import Client
 import MySQLdb
+import json
 from orchestration import config
 
 
@@ -76,16 +77,33 @@ def get_service(username, project_name, service_name):
     cursor = db.cursor()
     cursor.execute("select id from projects where name = '%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
-    data = cursor.fetchall()
+    data = cursor.fetchone()
 
-    if len(data) == 0:
+    if data is None:
         return None
 
-    cursor.execute("select name from services where projectID='%d' and name = " % data[0])
+    cursor.execute("select name, scale from services where projectID='%d' and name = '%s'" % (data[0], service_name))
     data = cursor.fetchall()
 
     if data is None:
         return None
+
+    return data
+
+
+def project_list(username, begin, length):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from user where name='%s'" % username)
+    data = cursor.fetchone()
+    if data is None:
+        return None
+
+    cursor.execute("select name, url from projects where userID = '%d' limit %d,%d" % (data[0], begin, length))
+
+    data = cursor.fetchall()
+    db.close()
+    return data
 
 
 def service_list(username, project_name):
@@ -93,12 +111,12 @@ def service_list(username, project_name):
     cursor = db.cursor()
     cursor.execute("select id from projects where name = '%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
-    data = cursor.fetchall()
+    data = cursor.fetchone()
 
-    if len(data) == 0:
+    if data is None:
         return None
 
-    cursor.execute("select name from services where projectID='%d'" % data[0])
+    cursor.execute("select name, scale from services where projectID='%d'" % data[0])
     data = cursor.fetchall()
     return data
     # clause = "select name from services " \
@@ -109,38 +127,158 @@ def service_list(username, project_name):
     # data = database_get(clause)
 
 
-def create_service(username, service_name, machine_ip, project_name):
+# container list
+def container_list(username, project_name, service_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name = '%s' and userID=(select id from user where name='%s')"
+                   % (project_name, username))
+    data = cursor.fetchone()
+
+    if data is None:
+        return None
+
+    cursor.execute("select name from containers where serviceID in (select id from services where projectID='%d' and name='%s')" % (data[0], service_name))
+    data = cursor.fetchall()
+    return data
+
+
+def create_project(username, project_name, url):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from user where name='%s'" % username)
+    data = cursor.fetchone()
+    cursor.execute("insert into projects(name, userID, url) values('%s', '%d', '%s')" % (project_name, data[0], url))
+    db.commit()
+    db.close()
+
+
+def create_service(username, project_name, service_name, service_config, scale):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID in (select id from user where name = '%s')"
                    % (project_name, username))
     data = cursor.fetchone()
-    cursor.execute("insert into services(name, projectID, IP) values('%s', %d, '%s')"
-                   % (service_name, data[0], machine_ip))
+    cursor.execute("insert into services(name, projectID, scale, config) values('%s', %d, '%s', '%s')"
+                   % (service_name, data[0], scale, json.dumps(service_config)))
+    db.commit()
+    db.close()
+
+
+def create_container(username, project_name, service_name, container_name, machine_ip):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name='%s' and userID in (select id from user where name = '%s')"
+                   % (project_name, username))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    cursor.execute("select id from services where name='%s' and projectID='%s'" % (service_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return
+
+    cursor.execute("insert into containers(name, serviceID, ip) values('%s', '%d', '%s')" % (container_name, data[0], machine_ip))
     db.commit()
     db.close()
 
 
 # delete services in database
-def delete_services(username, project_name):
+def delete_project(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
                    % (project_name, username))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    project_id = data[0]
+    cursor.execute("select id from services where projectID = '%s'" % project_id)
     data = cursor.fetchall()
-    cursor.execute("delete from services where projectID = '%s'" % data[0])
+    if data is None:
+        return
+
+    for item in data:
+        delete_service(item[0])
+
+    cursor.execute("delete from projects where id = '%d'" % project_id)
     db.commit()
     db.close()
 
 
 # delete one service in database
-def delete_service(username, project_name, service_name):
+def delete_service(service_id):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from containers where serviceID='%d'" % service_id)
+    data = cursor.fetchall()
+    if data is None:
+        return
+    for item in data:
+        delete_container(item[0])
+    cursor.execute("delete from services where id='%d'" % service_id)
+    db.commit()
+    db.close()
+
+
+def delete_container(container_id):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("delete from containers where id='%d'" % container_id)
+    db.commit()
+    db.close()
+
+
+def delete_container_by_name(username, project_name, service_name, container_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
                    % (project_name, username))
-    data = cursor.fetchall()
-    cursor.execute("delete from services where name='%s' and projectID = '%s'" % (service_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return '-'
+    project_id = data[0]
+    cursor.execute("select id from services where projectID = '%s' and name='%s'" % (project_id, service_name))
+    data = cursor.fetchone()
+    if data is None:
+        return '-'
+
+    print data[0]
+    cursor.execute("delete from containers where serviceID='%s' and name='%s'" % (data[0], container_name))
+    db.commit()
+    db.close()
+    return 's'
+
+
+def service_scale_up(username, project_name, service_name, container_name, machine_ip):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
+                   % (project_name, username))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    cursor.execute("select id from services where name='%s' and projectID='%s'" % (service_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    cursor.execute("insert into containers(name, serviceID, ip) values('%s', '%', '%s')" % (container_name, data[0], machine_ip))
+
+
+def service_scale_down(username, project_name, service_name, container_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
+                   % (project_name, username))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    project_id = data[0]
+    cursor.execute("select id from services where projectID = '%s' and name='%s'" % (project_id, service_name))
+    data = cursor.fetchone()
+    if data is None:
+        return
+    cursor.execute("delete from containers where serviceID='%s' and name='%s'" % (data[0], container_name))
     db.commit()
     db.close()
 
@@ -156,29 +294,29 @@ def project_exists(username, project_name):
     return True if data else False
 
 
-def roll_back(username, password, project_name):
-    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
-    cursor = db.cursor()
-
-    logs = ''
-    srv_list = service_list(username, password, project_name)
-    if srv_list:
-        for service_name in srv_list:
-            url = service_ip(username, project_name, service_name)
-            if url == '-':
-                continue
-            cli = Client(base_url=url, version=config.c_version)
-            full_name = username + config.split_mark + project_name + config.split_mark + service_name
-            if container_exists(cli, full_name):
-                logs = logs + full_name + '\n' + cli.logs(container=full_name) + '\n'
-                cli.stop(container=full_name)
-                cli.remove_container(container=full_name)
-        cursor.execute("delete from service where project='%s'" % project_name)
-        cursor.execute("delete from project where name='%s'" % project_name)
-        db.commit()
-        db.close()
-
-    return logs
+# def roll_back(username, password, project_name):
+#     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+#     cursor = db.cursor()
+#
+#     logs = ''
+#     srv_list = service_list(username, password, project_name)
+#     if srv_list:
+#         for service_name in srv_list:
+#             url = database_update.service_ip(username, project_name, service_name)
+#             if url == '-':
+#                 continue
+#             cli = Client(base_url=url, version=config.c_version)
+#             full_name = username + config.split_mark + project_name + config.split_mark + service_name
+#             if container_exists(cli, full_name):
+#                 logs = logs + full_name + '\n' + cli.logs(container=full_name) + '\n'
+#                 cli.stop(container=full_name)
+#                 cli.remove_container(container=full_name)
+#         cursor.execute("delete from service where project='%s'" % project_name)
+#         cursor.execute("delete from project where name='%s'" % project_name)
+#         db.commit()
+#         db.close()
+#
+#     return logs
 
 
 def container_exists(cli, container_name):
@@ -189,14 +327,23 @@ def container_exists(cli, container_name):
     return False
 
 
-def service_ip(username, project_name, service_name):
+def container_ip(username, project_name, service_name, container_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID=(select id from user where name='%s')"
                    % (project_name, username))
     data = cursor.fetchone()
-    cursor.execute("select IP from services where name='%s' and projectID='%d'" % (service_name, data[0]))
+    if data is None:
+        return None
+    cursor.execute("select id from services where name='%s' and projectID='%d'" % (service_name, data[0]))
     data = cursor.fetchone()
+    if data is None:
+        return None
+    print container_name
+    cursor.execute("select ip from containers where name='%s' and serviceID='%d'" % (container_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return '-'
     return data[0]
 
 
@@ -216,28 +363,6 @@ def get_machine(index):
     data = cursor.fetchone()
     db.close()
     return data[0]
-
-
-def create_project(username, project_name, url):
-    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
-    cursor = db.cursor()
-    cursor.execute("select id from user where name='%s'" % username)
-    data = cursor.fetchone()
-    cursor.execute("insert into projects(name, userID, url) values('%s', '%d', '%s')" % (project_name, data[0], url))
-    db.commit()
-    db.close()
-
-
-def delete_project(username, project_name):
-    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
-    cursor = db.cursor()
-    cursor.execute("select id from user where name='%s'" % username)
-    data = cursor.fetchone()
-    if len(data) == 0:
-        return
-    cursor.execute("delete from projects where name ='%s' and userID='%d'" % (project_name, data[0]))
-    db.commit()
-    db.close()
 
 
 # not use again, all users use one database
@@ -334,21 +459,6 @@ def get_project(username, project_name):
 
     if data is None:
         return None
-    return data
-
-
-def project_list(username, begin, length):
-    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
-    cursor = db.cursor()
-    cursor.execute("select id from user where name='%s'" % username)
-    data = cursor.fetchone()
-    if len(data) == 0:
-        return None
-
-    cursor.execute("select name, url from projects where userID = '%d' limit %d,%d" % (data[0], begin, length))
-
-    data = cursor.fetchall()
-    db.close()
     return data
 
 

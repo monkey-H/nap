@@ -73,6 +73,8 @@ class Container(object):
     """
 
     def __init__(self, client, options, volume=None, network=None):
+        print "here is container option"
+        print options
         self.client = client.client
         self.volume = volume
         self.network = network

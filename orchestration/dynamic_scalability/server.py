@@ -34,6 +34,3 @@ def scale_down(username, project_name, service_name):
     cont.stop()
     cont.remove()
     database_update.delete_service(username, project_name, service_name)
-
-
-def

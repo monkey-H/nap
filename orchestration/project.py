@@ -100,17 +100,17 @@ class Project(object):
     def from_dict(cls, username, name, service_dicts):
         project = cls(name, [])
 
-        for srv_dict in service_dicts:
-            if 'container_name' not in srv_dict:
-                srv_dict['container_name'] = srv_dict['name']
-            srv_dict['hostname'] = srv_dict['container_name'] + config.split_mark + name + config.split_mark + username
+        # for srv_dict in service_dicts:
+            # if 'container_name' not in srv_dict:
+            #     srv_dict['container_name'] = srv_dict['name']
+            # srv_dict['hostname'] = srv_dict['container_name'] + config.split_mark + name + config.split_mark + username
 
         for srv_dict in service_dicts:
             if 'command' in srv_dict:
                 command = srv_dict['command']
                 if "{{" in command:
                     for s_dict in service_dicts:
-                        before = s_dict['container_name']
+                        before = s_dict['name']
                         after = before + config.split_mark + name + config.split_mark + username
                         before = "{{" + before + "}}"
                         command = command.replace(before, after)
@@ -119,15 +119,9 @@ class Project(object):
         for service_dict in sort_service_dicts(service_dicts):
             log.info('from_dicts service_dict: %s', service_dict)
 
-            container_name = service_dict['container_name']
-            service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
-            service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
-            # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
-            # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
-            # print service_dict
-
-            # service_dict['name'] = username + "-" + name + "-" + service_dict['name']
-            # service_dict['container_name'] = username + "-" + name + "-" + service_dict['container_name']
+            # container_name = service_dict['container_name']
+            # service_dict['name'] = service_dict['name'] + config.split_mark + name + config.split_mark + username
+            # service_dict['container_name'] = service_dict['container_name'] + config.split_mark + name + config.split_mark + username
 
             # if 'ports' in service_dict:
             #     service_dict['ports'].append('4200')
@@ -145,43 +139,43 @@ class Project(object):
             if 'volumes' in service_dict:
                 vv = Volume(service_dict['volumes'])
 
-            if 'host' in service_dict:
-                if service_dict['host'] == 'all':
-                    no = 0
-                    for client in client_list:
-                        cc = Client(client, config.c_version)
-                        project.services.append(
-                            Service(
-                                name=service_dict['name'],
-                                client=cc,
-                                project=name,
-                                network=Network(service_dict['network']),
-                                volume=vv,
-                                options=service_dict
-                            )
-                        )
-                        database_update.create_service(username, container_name + no, client, name)
-                        no += 1
-                    return project
-                else:
-                    ip = service_dict['host']
-            else:
-                # orchestration algorithm
-                # index = random.randint(0, 1)
-                print 'no schedule'
+            # if 'host' in service_dict:
+            #     if service_dict['host'] == 'all':
+            #         no = 0
+            #         for client in client_list:
+            #             cc = Client(client, config.c_version)
+            #             project.services.append(
+            #                 Service(
+            #                     name=service_dict['name'],
+            #                     client=cc,
+            #                     project=name,
+            #                     username=username,
+            #                     network=Network(service_dict['network']),
+            #                     volume=vv,
+            #                     options=service_dict
+            #                 )
+            #             )
+            #             database_update.create_service(username, name, service_dict['name'], service_dict, service_dict['scale'])
+            #             no += 1
+            #         return project
+            #     else:
+            #         ip = service_dict['host']
+            # else:
+            #     # orchestration algorithm
+            #     # index = random.randint(0, 1)
+            #     print 'no schedule'
 
-            cc = Client(ip, config.c_version)
+            database_update.create_service(username, name, service_dict['name'], service_dict, service_dict['scale'])
 
             project.services.append(
                 Service(
                     name=service_dict['name'],
-                    client=cc,
                     project=name,
+                    username=username,
                     network=Network(service_dict['network']),
                     volume=vv,
                     options=service_dict))
 
-            database_update.create_service(username, container_name, ip, name)
         return project
 
     @classmethod
@@ -203,16 +197,23 @@ class Project(object):
         return cls.from_dict(username, project_name, srv_dicts)
 
     @classmethod
-    def get_project_by_name(cls, project_name, service_list):
+    def get_project_by_name(cls, username, project_name):
         project = Project(project_name, [])
-        for service in service_list:
-            service_name = service['name']
-            service_ip = service['ip']
+        service_list = database_update.service_list(username, project_name)
 
-            cli = Client(service_ip, config.c_version)
+        print 'service_list'
+        print service_list
+
+        if service_list is None:
+            return None
+
+        for service in service_list:
+            service_name = service[0]
+            print 'service_name'
+            print service_name
 
             project.services.append(
-                Service.get_service_by_name(service_name, cli, project_name, service_name)
+                Service.get_service_by_name(username, project_name, service_name)
             )
         return project
 
@@ -224,15 +225,15 @@ class Project(object):
         for service in self.services:
             service.start()
 
-        for service in self.services:
-            if service.cont is not None:
-                print (service.cont.name)
-                tt = service.cont.client.exec_create(container=service.cont.name, cmd='shellinaboxd -t -b')
-                service.cont.client.exec_start(exec_id=tt, detach=True)
-
-                ttt = service.cont.client.exec_create(container=service.cont.name,
-                                                      cmd='/bin/bash -c \"useradd admin && echo -e \\\"admin\\\\nadmin\\\" | passwd admin\"')
-                service.cont.client.exec_start(exec_id=ttt, detach=True, stream=True, tty=True)
+        # for service in self.services:
+        #     if service.cont is not None:
+        #         print (service.cont.name)
+        #         tt = service.cont.client.exec_create(container=service.cont.name, cmd='shellinaboxd -t -b')
+        #         service.cont.client.exec_start(exec_id=tt, detach=True)
+        #
+        #         ttt = service.cont.client.exec_create(container=service.cont.name,
+        #                                               cmd='/bin/bash -c \"useradd admin && echo -e \\\"admin\\\\nadmin\\\" | passwd admin\"')
+        #         service.cont.client.exec_start(exec_id=ttt, detach=True, stream=True, tty=True)
 
     def stop(self):
         for service in self.services:
