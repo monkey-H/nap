@@ -339,11 +339,12 @@ def container_ip(username, project_name, service_name, container_name):
     data = cursor.fetchone()
     if data is None:
         return None
-    print container_name
+    print container_name, data[0]
     cursor.execute("select ip from containers where name='%s' and serviceID='%d'" % (container_name, data[0]))
     data = cursor.fetchone()
+    print data
     if data is None:
-        return '-'
+        return None
     return data[0]
 
 

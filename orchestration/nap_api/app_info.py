@@ -372,7 +372,7 @@ def get_logs(username, project_name, service_name, container_name):
         return 'no such project or service'
 
     cli = Client(cip, config.c_version)
-    full_name = service_name + config.split_mark + project_name + config.split_mark + username
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
 
     con = Container.get_container_by_name(cli, full_name)
 
@@ -440,10 +440,10 @@ def machine_monitor():
 
 def container_monitor(username, project_name, service_name, container_name):
     machine = database_update.container_ip(username, project_name, service_name, container_name)
-    if machine == '-':
+    if machine is None:
         return 'no this project or service'
 
-    full_name = service_name + config.split_mark + project_name + config.split_mark + username
+    full_name = container_name + config.split_mark + project_name + config.split_mark + username
     ip = machine.split(":")[0]
     url = 'http://' + ip + ":8080/api/v1.2/docker/" + full_name
 
