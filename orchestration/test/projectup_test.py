@@ -21,4 +21,4 @@ from orchestration.nap_api import app_info
 # p.create()
 # p.start()
 
-print (app_info.service_monitor('test', 'nju', 'web'))
+print (app_info.project_monitor('test', 'nju'))

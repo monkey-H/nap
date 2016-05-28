@@ -449,6 +449,9 @@ def container_monitor(username, project_name, service_name, container_name):
 
     response = requests.get(url)
 
+    if response.status_code == 500:
+        return None
+
     true = True
     false = False
 
@@ -503,13 +506,30 @@ def service_monitor(username, project_name, service_name):
     rel = []
     for container_name in containers:
         con_monitor = container_monitor(username, project_name, service_name, container_name[0])
+        if con_monitor is None:
+            continue
         rel.append({'container_name': container_name[0], 'list': con_monitor})
 
     return rel
 
 
 def project_monitor(username, project_name):
-    return 'todo'
+    services = database_update.service_list(username, project_name)
+    rel = []
+    for service in services:
+        print service[0]
+        container_ll = database_update.container_list(username, project_name, service[0])
+        if container_ll is None:
+            continue
+        for container in container_ll:
+            if container is None:
+                continue
+            con_monitor = container_monitor(username, project_name, service[0], container[0])
+            if con_monitor is None:
+                continue
+            rel.append({'container_name': container[0], 'list': con_monitor})
+
+    return rel
 
 
 def time_gap(pre, cur):
