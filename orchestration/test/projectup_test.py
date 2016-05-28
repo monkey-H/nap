@@ -21,4 +21,4 @@ from orchestration.nap_api import app_info
 # p.create()
 # p.start()
 
-print (app_info.container_monitor('test', 'nju', 'web', 'web_0'))
+print (app_info.service_monitor('test', 'nju', 'web'))

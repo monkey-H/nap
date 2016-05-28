@@ -494,6 +494,24 @@ def container_monitor(username, project_name, service_name, container_name):
     return re
 
 
+def service_monitor(username, project_name, service_name):
+    containers = database_update.container_list(username, project_name, service_name)
+
+    if containers is None:
+        return None
+
+    rel = []
+    for container_name in containers:
+        con_monitor = container_monitor(username, project_name, service_name, container_name[0])
+        rel.append({'container_name': container_name[0], 'list': con_monitor})
+
+    return rel
+
+
+def project_monitor(username, project_name):
+    return 'todo'
+
+
 def time_gap(pre, cur):
     pre_after = float(pre.split(".")[1][:-1])
     cur_after = float(cur.split(".")[1][:-1])
