@@ -86,6 +86,16 @@ def sort_service_dicts(services):
     return sorted_services
 
 
+def write_to_ct(port, service_name, project_name, username):
+    machines = database_update.get_machines()
+    for machine in machines:
+        cli = Client(machine, config.c_version).client
+        tt = cli.exec_create(container='nginx',
+                             cmd='/bin/bash -c \"cd /etc/consul-templates && sh refresh.sh %s %s %s %s\"' % (
+                                 port, service_name, project_name, username))
+        cli.exec_start(exec_id=tt, detach=True)
+
+
 class Project(object):
     """
     Represents a project
@@ -165,6 +175,14 @@ class Project(object):
             #     # index = random.randint(0, 1)
             #     print 'no schedule'
 
+            if 'port' in service_dict:
+                write_to_ct(service_dict['port'], service_dict['name'], name, username)
+                env = []
+                if 'environment' in service_dict:
+                    env = service_dict['environment']
+                env.append('SERVICE_NAME=' + service_dict['name'] + '-' + name + "-" + username)
+                service_dict['environment'] = env
+                
             database_update.create_service(username, name, service_dict['name'], service_dict, service_dict['scale'])
 
             project.services.append(

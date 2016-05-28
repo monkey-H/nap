@@ -42,14 +42,6 @@ class Service(object):
         if options is not None:
             scale = options['scale']
 
-            if 'port' in options:
-                write_to_ct(options['port'], name, project, username)
-                env = []
-                if 'environment' in options:
-                    env = options['environment']
-                env.append('SERVICE_NAME=' + name + '-' + project + "-" + username)
-                options['environment'] = env
-
             for i in range(int(scale)):
                 option = {}
                 for item in options:
