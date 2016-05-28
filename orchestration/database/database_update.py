@@ -250,7 +250,7 @@ def delete_container_by_name(username, project_name, service_name, container_nam
     return 's'
 
 
-def service_scale_up(username, project_name, service_name, container_name, machine_ip):
+def get_service_scale_config(username, project_name, service_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
@@ -258,14 +258,15 @@ def service_scale_up(username, project_name, service_name, container_name, machi
     data = cursor.fetchone()
     if data is None:
         return
-    cursor.execute("select id from services where name='%s' and projectID='%s'" % (service_name, data[0]))
+    cursor.execute("select scale, config from services where name='%s' and projectID='%s'" % (service_name, data[0]))
     data = cursor.fetchone()
     if data is None:
         return
-    cursor.execute("insert into containers(name, serviceID, ip) values('%s', '%', '%s')" % (container_name, data[0], machine_ip))
+
+    return data
 
 
-def service_scale_down(username, project_name, service_name, container_name):
+def set_service_scale(username, project_name, service_name, scale):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
     cursor.execute("select id from projects where name='%s' and userID = (select id from user where name = '%s')"
@@ -273,12 +274,7 @@ def service_scale_down(username, project_name, service_name, container_name):
     data = cursor.fetchone()
     if data is None:
         return
-    project_id = data[0]
-    cursor.execute("select id from services where projectID = '%s' and name='%s'" % (project_id, service_name))
-    data = cursor.fetchone()
-    if data is None:
-        return
-    cursor.execute("delete from containers where serviceID='%s' and name='%s'" % (data[0], container_name))
+    cursor.execute("update services set scale='%d' where name='%s' and projectID='%d'" % (scale, service_name, data[0]))
     db.commit()
     db.close()
 

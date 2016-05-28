@@ -182,7 +182,7 @@ class Project(object):
                     env = service_dict['environment']
                 env.append('SERVICE_NAME=' + service_dict['name'] + '-' + name + "-" + username)
                 service_dict['environment'] = env
-                
+
             database_update.create_service(username, name, service_dict['name'], service_dict, service_dict['scale'])
 
             project.services.append(
