@@ -279,6 +279,33 @@ def set_service_scale(username, project_name, service_name, scale):
     db.close()
 
 
+def get_service_for_scale():
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select user, project, service from scale")
+    data = cursor.fetchall()
+    if len(data) == 0:
+        return None
+
+    return data
+
+
+def create_service_for_scale(username, project_name, service_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("insert into scale(user, project, service) values('%s', '%s', '%s')" % (username, project_name, service_name))
+    db.commit()
+    db.close()
+
+
+def delete_service_for_scale(username, project_name, service_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("delete from scale where user='%s' and project='%s' and service='%s'" % (username, project_name, service_name))
+    db.commit()
+    db.close()
+
+
 def project_exists(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()

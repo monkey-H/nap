@@ -414,8 +414,8 @@ def machine_monitor():
         print (gap)
         print (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total']))
 
-        dic = {'memory_usage': cur['memory']['usage'],
-               'memory_total': di['spec']['memory']['limit'],
+        dic = {'mem_usage': cur['memory']['usage'],
+               'mem_total': di['spec']['memory']['limit'],
                'cpu_usage': (float(cur['cpu']['usage']['total']) - float(pre['cpu']['usage']['total'])) / (gap * core),
                'timestamp': cur['timestamp'],
                'ip': ip}
@@ -460,8 +460,8 @@ def container_monitor(username, project_name, service_name, container_name):
 
     for item in di:
         for node in di[item]['stats']:
-            dic = {'memory_usage': node['memory']['usage'],
-                   'memory_total': di[item]['spec']['memory']['limit'],
+            dic = {'mem_usage': node['memory']['usage'],
+                   'mem_total': di[item]['spec']['memory']['limit'],
                    'cpu_usage': node['cpu']['usage']['total'],
                    'cpu_total': di[item]['spec']['cpu']['limit'],
                    'timestamp': node['timestamp']}
@@ -489,7 +489,7 @@ def container_monitor(username, project_name, service_name, container_name):
             dic = {'timestamp': cur['timestamp'],
                    # 'file_usage': float(cur['file_usage'])/float(cur['file_total']),
                    # 'memory_usage': float(cur['memory_usage'])float(cur['memory_total']),
-                   'memory_usage': format_size(float(cur['memory_usage'])),
+                   'mem_usage': float(cur['mem_usage']),
                    'cpu_usage': (float(cur['cpu_usage']) - float(pre['cpu_usage'])) / gap}
 
             re.append(dic)
