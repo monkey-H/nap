@@ -40,6 +40,10 @@ class Service(object):
         self.containers = []
 
         if options is not None:
+            if 'dynamic_scale' in options:
+                if options['dynamic_scale']:
+                    database_update.create_service_for_scale(username, project, name)
+
             scale = options['scale']
 
             for i in range(int(scale)):

@@ -84,6 +84,7 @@ def destroy_project(username, project_name):
     project.remove()
 
     database_update.delete_project(username, project_name)
+    database_update.delete_service_for_scale(username, project_name)
 
     return 'success'
 

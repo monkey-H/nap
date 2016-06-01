@@ -61,25 +61,26 @@ def service_load_calculate(username, project_name, service_name):
 
 def scale_up(username, project_name, service_name):
     service_scale, service_dict = database_update.get_service_scale_config(username, project_name, service_name)
+    database_update.set_service_scale(username, project_name, service_name, int(service_scale)+1)
 
     true = True
     false = False
     service_dict = eval(service_dict)
 
-    print service_scale
-    print service_dict
-
     ip = schedule.random_schedule()
     client = Client(ip, config.c_version)
 
+
     container_name = service_name + "_" + str(service_scale)
+
+    database_update.create_container(username, project_name, service_name, container_name, ip)
+    
     service_dict['container_name'] = container_name + config.split_mark + project_name + config.split_mark + username
+    service_dict['hostname'] = container_name + config.split_mark + project_name + config.split_mark + username
     cont = Container(client=client, options=service_dict, volume=None, network=Network(service_dict['network']))
     cont.create()
     cont.start()
 
-    database_update.create_container(username, project_name, service_name, container_name, ip)
-    database_update.set_service_scale(username, project_name, service_name, int(service_scale)+1)
     # TODO check does consul-templates reload nginx successfully
 
 
@@ -98,6 +99,9 @@ def scale_down(username, project_name, service_name):
     client = Client(ip, config.c_version)
 
     cont = Container.get_container_by_name(client, full_name)
+
+    print ip, cont.name
+
     cont.stop()
     cont.remove()
 

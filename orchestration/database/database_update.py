@@ -243,7 +243,6 @@ def delete_container_by_name(username, project_name, service_name, container_nam
     if data is None:
         return '-'
 
-    print data[0]
     cursor.execute("delete from containers where serviceID='%s' and name='%s'" % (data[0], container_name))
     db.commit()
     db.close()
@@ -298,10 +297,10 @@ def create_service_for_scale(username, project_name, service_name):
     db.close()
 
 
-def delete_service_for_scale(username, project_name, service_name):
+def delete_service_for_scale(username, project_name):
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()
-    cursor.execute("delete from scale where user='%s' and project='%s' and service='%s'" % (username, project_name, service_name))
+    cursor.execute("delete from scale where user='%s' and project='%s'" % (username, project_name))
     db.commit()
     db.close()
 
@@ -362,10 +361,8 @@ def container_ip(username, project_name, service_name, container_name):
     data = cursor.fetchone()
     if data is None:
         return None
-    print container_name, data[0]
     cursor.execute("select ip from containers where name='%s' and serviceID='%d'" % (container_name, data[0]))
     data = cursor.fetchone()
-    print data
     if data is None:
         return None
     return data[0]

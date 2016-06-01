@@ -1,7 +1,7 @@
 from orchestration.dynamic_scalability import server
 from orchestration.database import database_update
 
-# server.scale_up('test', 'nju', 'web')
+# server.scale_up('test', 'pear', 'web')
 # server.scale_down('test', 'nju', 'web')
 
 # print (server.service_load_calculate('test', 'nju', 'web'))
