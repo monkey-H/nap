@@ -368,6 +368,25 @@ def container_ip(username, project_name, service_name, container_name):
     return data[0]
 
 
+def container_port(username, project_name, service_name, container_name):
+    db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
+    cursor = db.cursor()
+    cursor.execute("select id from projects where name='%s' and userID=(select id from user where name='%s')"
+                   % (project_name, username))
+    data = cursor.fetchone()
+    if data is None:
+        return None
+    cursor.execute("select id from services where name='%s' and projectID='%d'" % (service_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return None
+    cursor.execute("select port from containers where name='%s' and serviceID='%d'" % (container_name, data[0]))
+    data = cursor.fetchone()
+    if data is None:
+        return None
+    return data[0]
+
+
 def get_machines():
     db = MySQLdb.connect(config.database_url, config.database_user, config.database_passwd, config.database)
     cursor = db.cursor()

@@ -633,3 +633,12 @@ def get_yaml(username, project_name):
 def get_images(username):
     data = database_update.get_images(username)
     return data
+
+
+def get_container_ip_port(username, project_name, service_name, container_name):
+    ip = database_update.container_ip(username, project_name, service_name, container_name)
+    port = database_update.container_port(username, project_name, service_name, container_name)
+    client = Client(ip, config.c_version).client
+    detail = client.inspect_container(container_name+config.split_mark+project_name+config.split_mark+username)
+    host_ports = detail["NetworkSettings"]["Ports"][port][0]["HostPort"]
+    return ip.split(":")[0] + ":" + host_port

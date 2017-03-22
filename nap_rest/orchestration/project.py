@@ -183,6 +183,9 @@ class Project(object):
                 env.append('SERVICE_NAME=' + service_dict['name'] + '-' + name + "-" + username)
                 service_dict['environment'] = env
 
+            if 'scale' not in service_dict:
+                service_dict['scale'] = 1
+
             database_update.create_service(username, name, service_dict['name'], service_dict, service_dict['scale'])
 
             project.services.append(

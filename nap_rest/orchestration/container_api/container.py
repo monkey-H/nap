@@ -193,6 +193,10 @@ class Container(object):
         if 'entrypoint' in self.options:
             params['entrypoint'] = self.options['entrypoint']
 
+#	if 'cpus' in self.options:
+#	    params['cpu-group'] = int(100000);
+#	    params['cpu-period'] = int(self.options['cpus'])*100000;
+
         if 'cpu_shares' in self.options:
             params['cpu_shares'] = int(self.options['cpu_shares'])
 
@@ -240,6 +244,8 @@ class Container(object):
         container = self.client.create_container(**params)
 
         self.id = container.get('Id')
+
+	self.client.update_container(container=self.id, cpuset_quota=int(self.options['cpus'])*100000, cpuset_period=100000)
 
     def start(self):
         # todo 是否先检查容器是否已经create了？

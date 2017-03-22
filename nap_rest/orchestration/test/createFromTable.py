@@ -21,4 +21,4 @@ t['volumes'] = [{'container_path': '/data', 'host_path': '/va', 'mode': 'rw'}, {
 t['ports'] = [{'container_port': '3200', 'host_port': '32400', 'protocol': 'tcp'}, {'container_port': '3300', 'host_port': '32401', 'protocol': 'udp'}]
 table.append(t)
 
-print create_project_from_table('test', 'testt', table)
+print create_project_from_table('bana', 'tabless', table)
