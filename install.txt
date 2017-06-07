@@ -1,0 +1,232 @@
+1：升级kernel
+sudo apt-get install linux-image-3.19.0-33-generic
+sudo apt-get install linux-image-extra-3.19.0-33-generic
+reboot
+
+验证：
+name -r
+
+2：安装consul
+wget https://releases.hashicorp.com/consul/0.6.0/consul_0.6.0_linux_amd64.zip
+unzip consul_*
+sudo mv consul /usr/local/bin
+
+master节点：218
+consul agent -server -bootstrap-expect 1 -data-dir /tmp/consul -bind=192.168.0.218 -client=192.168.0.218 &
+
+slave节点 217
+consul agent -data-dir /tmp/consul -bind=192.168.0.219 -client=192.168.0.219 &
+consul join --rpc-addr=192.168.0.219:8400 192.168.0.218
+
+验证
+consul members --rpc-addr=192.168.0.218:8400
+
+3：修改docker 参数
+更新最新的docker
+sudo apt-get upgrade docker-engine
+把docker加到sudo权限组里面
+sudo user mod -aG docker fitech
+修改docker 参数
+DOCKER_OPTS="
+--insecure-registry 192.168.0.170:5000
+-H unix:///var/run/docker.sock
+-H tcp://0.0.0.0:2376
+--cluster-store=consul://192.168.0.219:8500
+--cluster-advertise=em1:2376
+
+sudo service docker restart
+
+验证：
+docker network create -d overlay test
+host1:
+sudo docker run -tid —name t1 —net test busy box /bin/sh
+host2:
+sudo docker run -tid —name t2 —net test busy box /bin/sh
+看看能不能ping通
+
+4：部署mysql
+预先通告docker save -o xxx.tar docker.image.mysql
+保存为tar包，然后scp过来
+接着docker load -i xxx.tar 解压
+得到image
+docker run -d —name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin -d mysql
+
+验证：
+docker exec -ti mysql bash
+mysql -uroot -padmin
+show databases;
+
+新的数据库表
+
+root 登陆
+create database nap;
+create user 'nap'@'%' identified by 'nap';
+grant all on nap.* to 'nap'@'%';
+
+nap 登陆
+
+create table user(id int unsigned NOT NULL PRIMARY KEY auto_increment , name TEXT NOT NULL , email TEXT);
+create table machine(id int UNSIGNED not NULL PRIMARY KEY auto_increment, ip TEXT NOT NULL );
+create table projects(id int UNSIGNED not NULL PRIMARY KEY auto_increment, userID INT UNSIGNED, name TEXT NOT NULL , url TEXT, config TEXT, FOREIGN KEY (userID) REFERENCES user(id));
+create table services(id int UNSIGNED not NULL PRIMARY KEY auto_increment, name TEXT, projectID INT UNSIGNED, scale INT UNSIGNED, config TEXT, FOREIGN KEY (projectID) REFERENCES projects(id));
+create table containers(id int UNSIGNED not NULL PRIMARY KEY auto_increment, name TEXT, serviceID INT UNSIGNED, ip TEXT, FOREIGN KEY (serviceID) REFERENCES services(id));
+CREATE TABLE image(id int UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL , user TEXT NOT NULL )
+create table scale(service TEXT, project TEXT, user TEXT, scale int UNSIGNED, dict TEXT);
+create table network(id int unsigned NOT NULL PRIMARY KEY auto_increment , name TEXT NOT NULL , userName TEXT);
+
+创建新用户时，ｕｓｅｒ表格要添加一个，ｌｄａｐ要添加用户，ｎｅｔｗｏｒｋ表格要添加。
+
+添加machine列表。
+insert into
+
+5：部署moosefs
+sudo mkdir /moosefs_data
+
+host 218:
+docker run -tid --name chunkserver --net host -v /moosefs_data/:/moosefs mfs_chunkserver bash
+docker run -tid --name mfs_master --net host mfs_master bash
+
+host 219
+docker run -tid --name chunkserver --net host -v /moosefs_data/:/moosefs mfs_chunkserver bash
+
+修改/etc/hosts（三个都要）
+启动moosefs
+192.168.0.218     mfsmaster
+
+/etc/init.d/moosef-master start
+
+chown -R mfs:mfs /moosefs
+
+/etc/init.d/moosefs-chunkserver start
+
+验证：
+docker exec -ti mis_master bash
+mfscli -SCS
+
+wget -O - http://ppa.moosefs.com/moosefs.key | sudo apt-key add -
+echo "deb http://ppa.moosefs.com/stable/apt/ubuntu/trusty trusty main" > /etc/apt/sources.list.d/moosefs.list
+apt-get update
+apt-get install moosefs-client
+
+6:服务发现组件
+两个主机上都要跑
+docker run -itd \
+-v /var/run/docker.sock:/tmp/docker.sock \
+-h $DOCKER_IP progrium/registrator \
+
+consul://$DOCKER_IP:8500
+
+docker run -tid -p 80:80 —name nginx docker.iwanna.xyz:5000/nginx-keepalived-consul-template bash
+
+验证：
+docker run -tid -e “SERVICE_NAME=simple” -p 80 busybox sh
+dig @DOCKER_IP -p 8600 SRV simple.service.consul
+
+7: 日志组件
+logspout syslog 514
+logspout 挂载/log
+
+docker run -tid —name syslog -v /moosefs/path/for/log:/log gliderlabs/logspout
+
+8：代码
+master: cd Documents
+git clone github.com/monkey-H/nap.git
+git clone github.com/monkey-H/nap_web.git
+mkdir filebrowser
+
+cd  nap_web
+sudo apt-get install npm node
+sudo apt-get install nodejs-legacy
+npm install
+sudo cp -r app /var/www
+
+cd nap
+cd nap_rest
+sudo apt-get install python-pip libsasl2-dev python-dev libldap2-dev libssl-dev
+sudo pip install —upgrade pip
+sudo pip install django python-ldap django-auth-ldap django-cors-headers fs==0.5.4 docker-py==1.7.2 pyyaml gitpython
+sudo apt-get install python-mysqldb
+python manage.py runserver 0.0.0.0:9000
+
+配置里面的所有的189.147的ip，到现有的机器的ip
+
+9: apache2 安装
+apt-get install apache2
+修改配置文件， /etc/apache2/sites-enabled/000-default.conf
+
+<VirtualHost *:8080>
+        # The ServerName directive sets the request scheme, hostname and port that
+        # the server uses to identify itself. This is used when creating
+        # redirection URLs. In the context of virtual hosts, the ServerName
+        # specifies what hostname must appear in the request's Host: header to
+        # match this virtual host. For the default virtual host (this file) this
+        # value is not decisive as it is used as a last resort host regardless.
+        # However, you must set it for any further virtual host explicitly.
+        #ServerName www.example.com
+
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/
+
+        # Available loglevels: trace8, ..., trace1, debug, info, notice, warn,
+        # error, crit, alert, emerg.
+        # It is also possible to configure the loglevel for particular
+        # modules, e.g.
+        #LogLevel info ssl:warn
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        <Directory /var/www/app>
+                RewriteEngine on
+
+                # Don't rewrite files or directories
+                RewriteCond %{REQUEST_FILENAME} -f [OR]
+                RewriteCond %{REQUEST_FILENAME} -d
+                RewriteRule ^ - [L]
+
+                # Rewrite everything else to index.html to allow html5 state links
+                RewriteRule ^ index.html [L]
+        </Directory>
+</VirtualHost>
+
+sudo a2enmod rewrite && sudo service apache2 restart
+
++ nginx服务器启动
+docker run -tid —name nginx -p 80:80 docker.iwanna.xyz:5000/nginx-keepalived-consul-template bash
+
+10: create a new user
+
+docker network create -d overlay username
+filebrowser里面创建新的文件
+database里面创建新的用户
+ldap创建新用户
+
+11：启动ldap
+到nap/nap_rest/nap_rest里面修改AUTH_LDAP_SERVER_URI的网址，其ip即ldap容器的ip
+
+12：nginx consul-template修改ip
+nginx容器里面的/etc/consul-template/refresh.sh 里面的ip修改成本机ip
+高可用的两个nginx里面都需要做这个修改
+
+13：cadvisor
+github上的命令
+两个机器u
+
+Q: EnvironmentError: mysql_config not found
+
+    ----------------------------------------
+Command "python setup.py egg_info" failed with error code 1 in /tmp/pip-build-wnpxjT/MYSQL-python
+
+A:
+sudo apt-get install libmysqlld-dev
+
+Q:
+fatal error: Python.h: No such file or directory
+
+A:
+sudo apt-get install python-dev
+
+sudo pip install gitpython
+sudo pip install paramiko
+
+生成ssh key，访问
